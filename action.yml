@@ -100,6 +100,8 @@ runs:
           printSeparationLine '=' 80
         }
 
+
+
         # ======
         # SCRIPT
         # ======
@@ -109,8 +111,8 @@ runs:
         AVAILABLE_INITIAL=$(getAvailableSpace)
         AVAILABLE_ROOT_INITIAL=$(getAvailableSpace '/')
 
-        printDH "Before Clean-Up:"
-
+        printDH "BEFORE CLEAN-UP:"
+        echo ""
 
 
         # Option: Remove Android library
@@ -130,6 +132,7 @@ runs:
         if [[ ${{ inputs.dotnet }} == 'true' ]]; then
           BEFORE=$(getAvailableSpace)
 
+          # https://github.community/t/bigger-github-hosted-runners-disk-space/17267/11
           sudo rm -rf /usr/share/dotnet
           
           AFTER=$(getAvailableSpace)
@@ -190,8 +193,10 @@ runs:
         AVAILABLE_END=$(getAvailableSpace)
         AVAILABLE_ROOT_END=$(getAvailableSpace '/')
 
-        printDH "After Clean-Up:"
+        echo ""
+        printDH "AFTER CLEAN-UP:"
 
+        echo ""
         echo ""
 
         echo "/dev/root:"
