@@ -59,7 +59,7 @@ runs:
         # macro to compute available space
         # REF: https://unix.stackexchange.com/a/42049/60849
         # REF: https://stackoverflow.com/a/450821/408734
-        getAvailableSpace() { echo $(df -a | awk 'NR > 1 {avail+=$4} END {print avail}'); }
+        getAvailableSpace() { echo $(df -a $1 | awk 'NR > 1 {avail+=$4} END {print avail}'); }
 
         # macro to make Kb human readable (assume the input is Kb)
         # REF: https://unix.stackexchange.com/a/44087/60849
@@ -107,6 +107,7 @@ runs:
         # Display initial disk space stats
 
         AVAILABLE_INITIAL=$(getAvailableSpace)
+        AVAILABLE_ROOT_INITIAL=$(getAvailableSpace '/')
 
         printDH "Before Clean-Up:"
 
@@ -187,8 +188,13 @@ runs:
         # Output saved space statistic
 
         AVAILABLE_END=$(getAvailableSpace)
+        AVAILABLE_ROOT_END=$(getAvailableSpace '/')
 
         printDH "After Clean-Up:"
 
         echo ""
+
+        echo "/dev/root:"
+        printSavedSpace $((AVAILABLE_ROOT_END - AVAILABLE_ROOT_INITIAL))
+        echo "overall:"
         printSavedSpace $((AVAILABLE_END - AVAILABLE_INITIAL))
