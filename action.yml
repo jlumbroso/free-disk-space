@@ -40,12 +40,18 @@ runs:
         # ======
 
         # macro to print a line of equals
-        # REF: https://stackoverflow.com/a/5799353/408734
+        # (silly but works)
         printSeparationLine() {
           str=${1:=}
           num=${2:-80}
-          v=$(printf "%0.s${str}" {1..$num})
-          echo "${v}"
+          counter=1
+          output=""
+          while [ $counter -le $num ]
+          do
+             output="${output}${str}"
+             counter=$((counter+1))
+          done
+          echo "${output}"
         }
 
         # macro to compute available space
@@ -83,6 +89,12 @@ runs:
           echo "$ dh -h /"
           echo ""
           df -h /
+          echo "$ dh -a /"
+          echo ""
+          df -a /
+          echo "$ dh -a"
+          echo ""
+          df -a
           printSeparationLine '=' 80
         }
 
