@@ -2,8 +2,9 @@ name: "Free Disk Space (Ubuntu)"
 description: "A configurable GitHub Action to free up disk space on an Ubuntu GitHub Actions runner."
 
 # See: https://docs.github.com/en/actions/creating-actions/metadata-syntax-for-github-actions#branding
-icon: "trash-2"
-color: "green"
+branding:
+  icon: "trash-2"
+  color: "green"
 
 inputs:
   android:
