@@ -1,0 +1,10 @@
+name: Free Disk Space (Ubuntu)
+on: push
+
+jobs:
+  free-disk-space:
+    runs-on: ubuntu-latest
+    steps:
+      # If there is a problem with this GitHub Actions, this step will fail
+      - name: Free Disk Space
+        uses: jlumbroso/free-disk-space@main

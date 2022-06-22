@@ -34,20 +34,20 @@ runs:
         # macro to print a line of equals
         # REF: https://stackoverflow.com/a/5799353/408734
         printSeparationLine() {
-          str=${1:'*'}
+          str=${1:=}
           num=${2:-80}
-          v=$(printf "%-${num}s" "$str")
-          echo "${v// /*}"
+          v=$(printf "%0.s${str}" {1..$num})
+          echo "${v}"
         }
 
         # macro to compute available space
         # REF: https://unix.stackexchange.com/a/42049/60849
         # REF: https://stackoverflow.com/a/450821/408734
-        getAvailableSpace() { echo $(df -a | awk 'NR > 1 {avail+=$4} END {print avail}') }
+        getAvailableSpace() { echo $(df -a | awk 'NR > 1 {avail+=$4} END {print avail}'); }
 
         # macro to make bytecounts human readable
         # REF: https://unix.stackexchange.com/a/44087/60849
-        formatByteCount() { echo $(numfmt --to=iec-i --suffix=B --padding=7 $1) }
+        formatByteCount() { echo $(numfmt --to=iec-i --suffix=B --padding=7 $1); }
 
         # macro to output saved space
         printSavedSpace() {
@@ -69,13 +69,13 @@ runs:
         printDH() {
           caption=${1:-}
 
-          repeatedLine '=' 80
+          printSeparationLine '=' 80
           echo "${caption}"
           echo ""
           echo "$ dh -h /"
           echo ""
           df -h /
-          repeatedLine '=' 80
+          printSeparationLine '=' 80
         }
 
         # ======
@@ -123,7 +123,7 @@ runs:
           
           AFTER=$(getAvailableSpace)
           SAVED=$((AFTER-BEFORE))
-          printSavedSpace $SAVED ".NET runtime"
+          printSavedSpace $SAVED "Haskell runtime"
         fi
 
         # Option: Remove Swap storage
@@ -137,7 +137,7 @@ runs:
           
           AFTER=$(getAvailableSpace)
           SAVED=$((AFTER-BEFORE))
-          printSavedSpace $SAVED ".NET runtime"
+          printSavedSpace $SAVED "Swap storage"
         fi
 
 
