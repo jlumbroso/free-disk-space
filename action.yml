@@ -1,6 +1,8 @@
 name: "Free Disk Space (Ubuntu)"
 description: "A configurable GitHub Action to free up disk space on an Ubuntu GitHub Actions runner."
-icon: "archive"
+
+# See: https://docs.github.com/en/actions/creating-actions/metadata-syntax-for-github-actions#branding
+icon: "trash-2"
 color: "green"
 
 inputs:
@@ -59,9 +61,9 @@ runs:
         # REF: https://stackoverflow.com/a/450821/408734
         getAvailableSpace() { echo $(df -a | awk 'NR > 1 {avail+=$4} END {print avail}'); }
 
-        # macro to make bytecounts human readable
+        # macro to make Kb human readable (assume the input is Kb)
         # REF: https://unix.stackexchange.com/a/44087/60849
-        formatByteCount() { echo $(numfmt --to=iec-i --suffix=B --padding=7 $1); }
+        formatByteCount() { echo $(numfmt --to=iec-i --suffix=B --padding=7 $1'000'); }
 
         # macro to output saved space
         printSavedSpace() {
