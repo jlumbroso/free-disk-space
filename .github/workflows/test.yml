@@ -8,3 +8,13 @@ jobs:
       # If there is a problem with this GitHub Actions, this step will fail
       - name: Free Disk Space
         uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: true
+
+          # all of these default to true, but feel free to set to
+          # false if necessary for your workflow
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          swap-storage: true

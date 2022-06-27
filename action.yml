@@ -20,12 +20,19 @@ inputs:
     required: false
     default: "true"
 
-  # option inspired after:
+  # option inspired by:
   # https://github.com/apache/flink/blob/master/tools/azure-pipelines/free_disk_space.sh
   large-packages:
     description: "Remove large packages"
     required: false
     default: "true"
+
+  # option inspired by:
+  # https://github.com/actions/virtual-environments/issues/2875#issuecomment-1163392159
+  tool-cache:
+    description: "Remove image tool cache"
+    required: false
+    default: "false"
 
   swap-storage:
     description: "Remove swap storage"
@@ -171,6 +178,19 @@ runs:
           AFTER=$(getAvailableSpace)
           SAVED=$((AFTER-BEFORE))
           printSavedSpace $SAVED "Large misc. packages"
+        fi
+
+        # Option: Remove tool cache
+        # REF: https://github.com/actions/virtual-environments/issues/2875#issuecomment-1163392159
+
+        if [[ ${{ inputs.tool-cache }} == 'true' ]]; then
+          BEFORE=$(getAvailableSpace)
+
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+          
+          AFTER=$(getAvailableSpace)
+          SAVED=$((AFTER-BEFORE))
+          printSavedSpace $SAVED "Tool cache"
         fi
 
         # Option: Remove Swap storage
