@@ -7,7 +7,7 @@ jobs:
     steps:
       # If there is a problem with this GitHub Actions, this step will fail
       - name: Free Disk Space
-        uses: jlumbroso/free-disk-space@main
+        uses: marksiasol/free-disk-space@fix-main
         with:
           tool-cache: true
 
