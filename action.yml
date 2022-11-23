@@ -166,7 +166,7 @@ runs:
         if [[ ${{ inputs.large-packages }} == 'true' ]]; then
           BEFORE=$(getAvailableSpace)
 
-          sudo DEBIAN_FRONTEND=noninteractive 
+          DEBIAN_FRONTEND=noninteractive 
           sudo apt-get upgrade
 
           sudo dpkg --remove '^dotnet-.*'
