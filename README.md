@@ -32,6 +32,7 @@ jobs:
         dotnet: true
         haskell: true
         large-packages: true
+        docker-images: true
         swap-storage: true
 ```
 ## Options
@@ -49,6 +50,7 @@ Here are a few sources of inspiration:
 - https://github.com/apache/flink/blob/master/tools/azure-pipelines/free_disk_space.sh
 - https://github.com/ShubhamTatvamasi/free-disk-space-action
 - https://github.com/actions/virtual-environments/issues/2875#issuecomment-1163392159
+- https://github.com/easimon/maximize-build-space/
 
 ## Typical Output
 
