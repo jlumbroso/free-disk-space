@@ -166,12 +166,12 @@ runs:
         if [[ ${{ inputs.large-packages }} == 'true' ]]; then
           BEFORE=$(getAvailableSpace)
 
-          sudo apt-get remove -y '^dotnet-.*' || true
-          sudo apt-get remove -y '^llvm-.*' || true
-          sudo apt-get remove -y 'php.*' || true
-          sudo apt-get remove -y '^mongodb-.*' || true
-          sudo apt-get remove -y '^mysql-.*' || true
-          sudo apt-get remove -y azure-cli google-cloud-sdk google-chrome-stable firefox powershell mono-devel libgl1-mesa-dri || true
+          sudo apt-get remove -y '^dotnet-.*' --fix-missing || true
+          sudo apt-get remove -y '^llvm-.*' --fix-missing || true
+          sudo apt-get remove -y 'php.*' --fix-missing || true
+          sudo apt-get remove -y '^mongodb-.*' --fix-missing || true
+          sudo apt-get remove -y '^mysql-.*' --fix-missing || true
+          sudo apt-get remove -y azure-cli google-cloud-sdk google-chrome-stable firefox powershell mono-devel libgl1-mesa-dri --fix-missing || true
           sudo apt-get autoremove -y || true
           sudo apt-get clean || true
           
