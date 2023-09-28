@@ -1,14 +1,11 @@
 name: Free Disk Space (Ubuntu)
 on:
   push:
-    branches:
-      - '*'
+    branches: [ main ]
   pull_request:
-    branches:
-      - '*'
+    branches: [ main ]
   workflow_dispatch:
-    branches:
-      - '*'
+    branches: [ main ]
 
 jobs:
   free-disk-space:
@@ -16,7 +13,7 @@ jobs:
     steps:
       # If there is a problem with this GitHub Actions, this step will fail
       - name: Free Disk Space
-        uses: jlumbroso/free-disk-space@main
+        uses: ${{ github.actor }}/free-disk-space@main
         with:
           tool-cache: true
 
