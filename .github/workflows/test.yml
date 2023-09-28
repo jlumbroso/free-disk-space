@@ -1,6 +1,14 @@
 name: Free Disk Space (Ubuntu)
-on: push
-workflow_dispatch:
+on:
+  push:
+    branches:
+      - '*'
+  pull_request:
+    branches:
+      - '*'
+  workflow_dispatch:
+    branches:
+      - '*'
 
 jobs:
   free-disk-space:
