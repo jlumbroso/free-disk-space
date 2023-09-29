@@ -133,7 +133,7 @@ runs:
         if [[ ${{ inputs.android }} == 'true' ]]; then
           BEFORE=$(getAvailableSpace)
           
-          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /usr/local/lib/android || true
 
           AFTER=$(getAvailableSpace)
           SAVED=$((AFTER-BEFORE))
@@ -146,7 +146,7 @@ runs:
           BEFORE=$(getAvailableSpace)
 
           # https://github.community/t/bigger-github-hosted-runners-disk-space/17267/11
-          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/share/dotnet || true
           
           AFTER=$(getAvailableSpace)
           SAVED=$((AFTER-BEFORE))
@@ -158,7 +158,7 @@ runs:
         if [[ ${{ inputs.haskell }} == 'true' ]]; then
           BEFORE=$(getAvailableSpace)
 
-          sudo rm -rf /opt/ghc
+          sudo rm -rf /opt/ghc || true
           
           AFTER=$(getAvailableSpace)
           SAVED=$((AFTER-BEFORE))
@@ -192,7 +192,7 @@ runs:
         if [[ ${{ inputs.docker-images }} == 'true' ]]; then
           BEFORE=$(getAvailableSpace)
 
-          sudo docker image prune --all --force
+          sudo docker image prune --all --force || true
 
           AFTER=$(getAvailableSpace)
           SAVED=$((AFTER-BEFORE))
@@ -205,7 +205,7 @@ runs:
         if [[ ${{ inputs.tool-cache }} == 'true' ]]; then
           BEFORE=$(getAvailableSpace)
 
-          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY" || true
           
           AFTER=$(getAvailableSpace)
           SAVED=$((AFTER-BEFORE))
@@ -217,8 +217,8 @@ runs:
         if [[ ${{ inputs.swap-storage }} == 'true' ]]; then
           BEFORE=$(getAvailableSpace)
 
-          sudo swapoff -a
-          sudo rm -f /mnt/swapfile
+          sudo swapoff -a || true
+          sudo rm -f /mnt/swapfile || true
           free -h
           
           AFTER=$(getAvailableSpace)
