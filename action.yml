@@ -159,6 +159,8 @@ runs:
           BEFORE=$(getAvailableSpace)
 
           sudo rm -rf /opt/ghc || true
+          sudo rm -rf /usr/local/.ghcup || true
+
           
           AFTER=$(getAvailableSpace)
           SAVED=$((AFTER-BEFORE))
