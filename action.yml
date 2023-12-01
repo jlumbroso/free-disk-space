@@ -48,6 +48,10 @@ inputs:
     description: "Allow use of alternative apt mirrors"
     required: false
     default: "false"
+  apt-mirror-country:
+    description: "Location of the apt mirror to use (if using GitHub cloud runners, select 'US')"
+    required: false
+    default: "US"
 
 runs:
   using: "composite"
@@ -180,7 +184,7 @@ runs:
           if [[ ${{ inputs.allow-apt-mirrors }} == 'true' ]]; then
             # Select alternative apt mirror
             sudo gem install apt-spy2
-            sudo apt-spy2 fix --commit --launchpad --country=US
+            sudo apt-spy2 fix --commit --launchpad --country=${{ inputs.apt-mirror-country }}
             sudo apt-get update
           fi
           
