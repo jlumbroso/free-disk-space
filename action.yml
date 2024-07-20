@@ -53,6 +53,18 @@ runs:
         # ======
         # MACROS
         # ======
+        
+        fast_rmdir() {
+          if [[ -d "$1" ]] && [[ -n "$1" ]] && [[ ! "$1" = "/" ]] && [[ ! "$1" = "~" ]]; then
+            echo "Removing directory: $1"
+            sudo find "$1" -type f -delete -print | wc -l
+            sudo rm -rf "$1"
+          fi
+        }
+
+        list_installed_dpkg() {
+          dpkg --get-selections $@ | grep -v deinstall | awk '{print $1}'
+        }
 
         # macro to print a line of equals
         # (silly but works)
@@ -133,7 +145,7 @@ runs:
           STAGE_START_TIME=$(date +%s)
           BEFORE=$(getAvailableSpace)
           
-          sudo rm -rf /usr/local/lib/android || true
+          fast_rmdir /usr/local/lib/android || true
 
           AFTER=$(getAvailableSpace)
           SAVED=$((AFTER-BEFORE))
@@ -149,7 +161,7 @@ runs:
           BEFORE=$(getAvailableSpace)
 
           # https://github.community/t/bigger-github-hosted-runners-disk-space/17267/11
-          sudo rm -rf /usr/share/dotnet || true
+          fast_rmdir /usr/share/dotnet || true
           
           AFTER=$(getAvailableSpace)
           SAVED=$((AFTER-BEFORE))
@@ -164,8 +176,8 @@ runs:
           STAGE_START_TIME=$(date +%s)
           BEFORE=$(getAvailableSpace)
 
-          sudo rm -rf /opt/ghc || true
-          sudo rm -rf /usr/local/.ghcup || true
+          fast_rmdir /opt/ghc || true
+          fast_rmdir /usr/local/.ghcup || true
           
           AFTER=$(getAvailableSpace)
           SAVED=$((AFTER-BEFORE))
@@ -180,17 +192,23 @@ runs:
         if [[ ${{ inputs.large-packages }} == 'true' ]]; then
           STAGE_START_TIME=$(date +%s)
           BEFORE=$(getAvailableSpace)
-          
-          sudo apt-get remove -y '^aspnetcore-.*' || echo "::warning::The command [sudo apt-get remove -y '^aspnetcore-.*'] failed to complete successfully. Proceeding..."
-          sudo apt-get remove -y '^dotnet-.*' --fix-missing || echo "::warning::The command [sudo apt-get remove -y '^dotnet-.*' --fix-missing] failed to complete successfully. Proceeding..."
-          sudo apt-get remove -y '^llvm-.*' --fix-missing || echo "::warning::The command [sudo apt-get remove -y '^llvm-.*' --fix-missing] failed to complete successfully. Proceeding..."
-          sudo apt-get remove -y 'php.*' --fix-missing || echo "::warning::The command [sudo apt-get remove -y 'php.*' --fix-missing] failed to complete successfully. Proceeding..."
-          sudo apt-get remove -y '^mongodb-.*' --fix-missing || echo "::warning::The command [sudo apt-get remove -y '^mongodb-.*' --fix-missing] failed to complete successfully. Proceeding..."
-          sudo apt-get remove -y '^mysql-.*' --fix-missing || echo "::warning::The command [sudo apt-get remove -y '^mysql-.*' --fix-missing] failed to complete successfully. Proceeding..."
-          sudo apt-get remove -y azure-cli google-chrome-stable firefox powershell mono-devel libgl1-mesa-dri --fix-missing || echo "::warning::The command [sudo apt-get remove -y azure-cli google-chrome-stable firefox powershell mono-devel libgl1-mesa-dri --fix-missing] failed to complete successfully. Proceeding..."
-          sudo apt-get remove -y google-cloud-sdk --fix-missing || echo "::debug::The command [sudo apt-get remove -y google-cloud-sdk --fix-missing] failed to complete successfully. Proceeding..."
-          sudo apt-get remove -y google-cloud-cli --fix-missing || echo "::debug::The command [sudo apt-get remove -y google-cloud-cli --fix-missing] failed to complete successfully. Proceeding..."
-          sudo apt-get autoremove -y || echo "::warning::The command [sudo apt-get autoremove -y] failed to complete successfully. Proceeding..."
+
+          pkgs=$(list_installed_dpkg 'aspnetcore-*' 'dotnet-*' 'llvm-*' '*php*' 'mongodb-*' 'mysql-*' azure-cli google-chrome-stable firefox powershell mono-devel libgl1-mesa-dri 'google-cloud-*' 'gcloud-*' || true)
+
+          gcloud_prerm='#!/bin/sh
+          echo $0
+          if [ -d "/usr/lib/google-cloud-sdk" ]; then
+            echo "Cleaning Google Cloud CLI files..."
+            find /usr/lib/google-cloud-sdk -type f -delete -print | wc -l
+            rm -rf /usr/lib/google-cloud-sdk
+            echo "Cleaning Google Cloud CLI manuals..."
+            find /usr/share/man -type f -name "gcloud*" -delete -print | wc -l
+          fi'
+
+          echo "$gcloud_prerm" | sudo tee /var/lib/dpkg/info/google-cloud-cli-anthoscli.prerm >/dev/null
+          echo "$gcloud_prerm" | sudo tee /var/lib/dpkg/info/google-cloud-cli.prerm >/dev/null
+
+          sudo apt-get remove --autoremove -y $pkgs || echo "::warning::The command [sudo apt-get remove -y] failed to complete successfully. Proceeding..."
           sudo apt-get clean || echo "::warning::The command [sudo apt-get clean] failed to complete successfully. Proceeding..."
 
           AFTER=$(getAvailableSpace)
@@ -222,7 +240,7 @@ runs:
           STAGE_START_TIME=$(date +%s)
           BEFORE=$(getAvailableSpace)
 
-          sudo rm -rf "$AGENT_TOOLSDIRECTORY" || true
+          fast_rmdir "$AGENT_TOOLSDIRECTORY" || true
           
           AFTER=$(getAvailableSpace)
           SAVED=$((AFTER-BEFORE))
