@@ -59,12 +59,12 @@ inputs:
     description: "Remove LLVM"
     required: false
     default: "true"
-  miniconda:
-    description: "Remove Miniconda runtime"
-    required: false
-    default: "true"
   mono:
     description: "Remove Mono runtime"
+    required: false
+    default: "true"
+  mysql:
+    description: "Remove MySQL"
     required: false
     default: "true"
   node:
@@ -75,12 +75,20 @@ inputs:
     description: "Remove Python runtime"
     required: false
     default: "true"
+  postgresql:
+    description: "Remove PostgreSQL"
+    required: false
+    default: "true"
   powershell:
     description: "Remove Powershell runtime"
     required: false
     default: "true"
   ruby:
     description: "Remove Ruby runtime"
+    required: false
+    default: "true"
+  runners:
+    description: "Remove Runners"
     required: false
     default: "true"
   rust:
@@ -300,12 +308,15 @@ runs:
             /usr/lib/*-linux-gnu/liblldb* &
         fi
 
-        if [[ ${{ inputs.miniconda }} == 'true' ]]; then
-          remove "Miniconda runtime" /usr/share/miniconda &
-        fi
-
         if [[ ${{ inputs.mono }} == 'true' ]]; then
           remove "Mono runtime" /usr/lib/mono &
+        fi
+
+        if [[ ${{ inputs.mysql }} == 'true' ]]; then
+        {
+          sudo systemctl stop mysql -q || true
+          remove "MySQL" /var/lib/mysql/
+        }&
         fi
 
         if [[ ${{ inputs.node }} == 'true' ]]; then
@@ -316,7 +327,14 @@ runs:
         fi
 
         if [[ ${{ inputs.python }} == 'true' ]]; then
-          remove "Python runtime" /opt/pipx &
+          remove "Python runtime" /opt/pipx /usr/share/miniconda &
+        fi
+
+        if [[ ${{ inputs.postgresql }} == 'true' ]]; then
+        {
+          sudo systemctl stop postgresql -q || true
+          remove "PostgreSQL" /usr/lib/postgresql /var/lib/postgresql
+        }&
         fi
 
         if [[ ${{ inputs.powershell }} == 'true' ]]; then
@@ -324,7 +342,11 @@ runs:
         fi
 
         if [[ ${{ inputs.ruby }} == 'true' ]]; then
-          remove "Rust runtime" /var/lib/gems/ /home/linuxbrew/.linuxbrew/ /usr/share/ri &
+          remove "Ruby runtime" /var/lib/gems/ /home/linuxbrew/.linuxbrew/ /usr/share/ri &
+        fi
+
+        if [[ ${{ inputs.rust }} == 'true' ]]; then
+          remove "Ruuners" /home/{runner,runneradmin}/runners
         fi
 
         if [[ ${{ inputs.rust }} == 'true' ]]; then
@@ -334,11 +356,11 @@ runs:
         fi
 
         if [[ ${{ inputs.snap }} == 'true' ]]; then
-        (
-          sudo systemctl stop snapd.service &>/dev/null || true
-          sudo umount --recursive /snap/*/* &>/dev/null || true
+        {
+          sudo systemctl stop snapd.service -q || true
+          sudo umount --recursive /snap/*/* -q || true
           remove "Snap" ~/snap /snap /var/snap /var/lib/snapd /usr/lib/snapd
-        )&
+        }&
         fi
 
         if [[ ${{ inputs.swift }} == 'true' ]]; then
@@ -370,7 +392,7 @@ runs:
         fi
 
         if [[ ${{ inputs.docker-images }} == 'true' ]]; then
-        (
+        {
           BEFORE=$(getAvailableSpace)
 
           sudo docker image prune --all --force &>/dev/null || true
@@ -378,14 +400,14 @@ runs:
           AFTER=$(getAvailableSpace)
           SAVED=$((AFTER-BEFORE))
           printSavedSpace $SAVED "Docker images"
-        )&
+        }&
         fi
 
         if [[ ${{ inputs.swap-storage }} == 'true' ]]; then
-        (
+        {
           sudo swapoff -a || true
           remove "Swap storage" /mnt/swapfile
-        )&
+        }&
         fi
 
         # Wait until all background jobs finishes
