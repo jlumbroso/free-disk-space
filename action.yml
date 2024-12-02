@@ -11,6 +11,10 @@ inputs:
     description: "Remove Android runtime"
     required: false
     default: "true"
+  az:
+    description: "Remove Azure CLI"
+    required: false
+    default: "true"
   aws-cli:
     description: "Remove AWS CLI"
     required: false
@@ -45,6 +49,10 @@ inputs:
     default: "true"
   haskell:
     description: "Remove Haskell runtime"
+    required: false
+    default: "true"
+  heroku:
+    description: "Remove Heroku"
     required: false
     default: "true"
   llvm:
@@ -171,6 +179,10 @@ runs:
           df -ha
           echo ''
 
+          echo '$ free -h'
+          free -h
+          echo ''
+
           # this is slow, this is why it is not enabled by default
           if [[ ${{ inputs.debug }} == 'true' ]]; then
             echo '$ du -h /* 2>/dev/null | sort -hr | head -n 50'
@@ -183,6 +195,15 @@ runs:
           printSeparationLine '=' 80
         }
 
+        remove() {
+          BEFORE=$(getAvailableSpace)
+
+          sudo rm -rf ${@:2} || true
+
+          AFTER=$(getAvailableSpace)
+          SAVED=$((AFTER-BEFORE))
+          printSavedSpace $SAVED "$1"
+        }
 
 
         # ======
@@ -199,257 +220,110 @@ runs:
         # Clean-up
 
         if [[ ${{ inputs.android }} == 'true' ]]; then
-          BEFORE=$(getAvailableSpace)
+          remove "Android library" /usr/local/lib/android &
+        fi
 
-          sudo rm -rf /usr/local/lib/android || true
-
-          AFTER=$(getAvailableSpace)
-          SAVED=$((AFTER-BEFORE))
-          printSavedSpace $SAVED "Android library"
+        if [[ ${{ inputs.az }} == 'true' ]]; then
+          remove "Az" /opt/az &
         fi
 
         if [[ ${{ inputs.aws-cli }} == 'true' ]]; then
-          BEFORE=$(getAvailableSpace)
-
-          sudo rm -rf /usr/local/aws-* || true
-
-          AFTER=$(getAvailableSpace)
-          SAVED=$((AFTER-BEFORE))
-          printSavedSpace $SAVED "Android library"
+          remove "AWS CLI" /usr/local/aws* &
         fi
 
         if [[ ${{ inputs.browsers }} == 'true' ]]; then
-          BEFORE=$(getAvailableSpace)
-
-          sudo rm -rf /opt/chrome || true
-          sudo rm -rf /opt/google/chrome || true
-          sudo rm -rf /usr/local/share/chromium || true
-          sudo rm -rf /opt/microsoft/edge || true
-          sudo rm -rf /opt/microsoft/msedge || true
-          sudo rm -rf /opt/msedge || true
-          sudo rm -rf /usr/lib/firefox || true
-
-          AFTER=$(getAvailableSpace)
-          SAVED=$((AFTER-BEFORE))
-          printSavedSpace $SAVED "Browsers"
+          remove "Browsers" \
+            /opt/chrome \
+            /opt/google/chrome \
+            /usr/local/share/chromium \
+            /opt/microsoft/{edge,msedge} \
+            /opt/msedge \
+            /usr/lib/firefox &
         fi
 
         if [[ ${{ inputs.gcc }} == 'true' ]]; then
-        (
-          BEFORE=$(getAvailableSpace)
-
-          sudo rm -rf /usr/lib/gcc || true
-
-          AFTER=$(getAvailableSpace)
-          SAVED=$((AFTER-BEFORE))
-          printSavedSpace $SAVED "GCC"
-        )&
+          remove "GCC" /usr/lib/gcc &
         fi
 
         if [[ ${{ inputs.google-cloud-sdk }} == 'true' ]]; then
-        (
-          BEFORE=$(getAvailableSpace)
-
-          sudo rm -rf /usr/lib/google-cloud-sdk || true
-
-          AFTER=$(getAvailableSpace)
-          SAVED=$((AFTER-BEFORE))
-          printSavedSpace $SAVED "GCC"
-        )&
+          remove "Google Cloud SDK" /usr/lib/google-cloud-sdk &
         fi
 
         if [[ ${{ inputs.dotnet }} == 'true' ]]; then
-        (
-          BEFORE=$(getAvailableSpace)
-
-          # https://github.community/t/bigger-github-hosted-runners-disk-space/17267/11
-          sudo rm -rf /usr/share/dotnet || true
-
-          AFTER=$(getAvailableSpace)
-          SAVED=$((AFTER-BEFORE))
-          printSavedSpace $SAVED ".NET runtime"
-        )&
+          remove ".NET runtime" /usr/share/dotnet &
         fi
 
         if [[ ${{ inputs.jvm }} == 'true' ]]; then
-        (
-          BEFORE=$(getAvailableSpace)
-
-          sudo rm -rf /usr/lib/jvm || true
-          sudo rm -rf /usr/share/gradle* || true
-          sudo rm -rf /root/.sbt || true
-          sudo rm -rf /usr/share/sbt || true
-          sudo rm -rf /usr/local/lib/lein || true
-
-          AFTER=$(getAvailableSpace)
-          SAVED=$((AFTER-BEFORE))
-          printSavedSpace $SAVED "JVM runtime"
-        )&
+          remove "JVM runtime" \
+            /usr/lib/jvm \
+            /usr/share/gradle* \
+            /usr/share/sbt \
+            /root/.sbt \
+            /usr/local/lib/lein &
         fi
 
         if [[ ${{ inputs.julia }} == 'true' ]]; then
-        (
-          BEFORE=$(getAvailableSpace)
-
-          sudo rm -rf /usr/local/julia* || true
-
-          AFTER=$(getAvailableSpace)
-          SAVED=$((AFTER-BEFORE))
-          printSavedSpace $SAVED "Julia runtime"
-        )&
+          remove "Julia runtime" /usr/local/julia* &
         fi
 
         if [[ ${{ inputs.miniconda }} == 'true' ]]; then
-        (
-          BEFORE=$(getAvailableSpace)
-
-          sudo rm -rf /usr/share/miniconda || true
-
-          AFTER=$(getAvailableSpace)
-          SAVED=$((AFTER-BEFORE))
-          printSavedSpace $SAVED "Miniconda runtime"
-        )&
+          remove "Miniconda runtime" /usr/share/miniconda &
         fi
 
         if [[ ${{ inputs.mono }} == 'true' ]]; then
-        (
-          BEFORE=$(getAvailableSpace)
-
-          sudo rm -rf /usr/lib/mono || true
-
-          AFTER=$(getAvailableSpace)
-          SAVED=$((AFTER-BEFORE))
-          printSavedSpace $SAVED "Mono runtime"
-        )&
+          remove "Mono runtime" /usr/lib/mono &
         fi
 
         if [[ ${{ inputs.node }} == 'true' ]]; then
-        (
-          BEFORE=$(getAvailableSpace)
-
-          sudo rm -rf /usr/local/n || true
-          sudo rm -rf /usr/local/lib/node_modules || true
-
-          AFTER=$(getAvailableSpace)
-          SAVED=$((AFTER-BEFORE))
-          printSavedSpace $SAVED "Node runtime"
-        )&
+          remove "Node runtime" /usr/local/n /usr/local/lib/node_modules &
         fi
 
         if [[ ${{ inputs.python }} == 'true' ]]; then
-        (
-          BEFORE=$(getAvailableSpace)
-
-          sudo rm -rf /opt/pipx || true
-
-          AFTER=$(getAvailableSpace)
-          SAVED=$((AFTER-BEFORE))
-          printSavedSpace $SAVED "Python runtime"
-        )&
+          remove "Python runtime" /opt/pipx &
         fi
 
         if [[ ${{ inputs.powershell }} == 'true' ]]; then
-        (
-          BEFORE=$(getAvailableSpace)
-
-          sudo rm -rf /usr/local/share/powershell || true
-          sudo rm -rf /opt/microsoft/powershell || true
-
-          AFTER=$(getAvailableSpace)
-          SAVED=$((AFTER-BEFORE))
-          printSavedSpace $SAVED "Powershell runtime"
-        )&
+          remove "Powershell runtime" /usr/local/share/powershell /opt/microsoft/poweshell &
         fi
 
         if [[ ${{ inputs.haskell }} == 'true' ]]; then
-        (
-          BEFORE=$(getAvailableSpace)
+          remove "Haskell runtime" /opt/ghc /usr/local/.ghcup &
+        fi
 
-          sudo rm -rf /opt/ghc || true
-          sudo rm -rf /usr/local/.ghcup || true
-
-          AFTER=$(getAvailableSpace)
-          SAVED=$((AFTER-BEFORE))
-          printSavedSpace $SAVED "Haskell runtime"
-        )&
+        if [[ ${{ inputs.heroku }} == 'true' ]]; then
+          remove "Heroku" /usr/lib/heroku &
         fi
 
         if [[ ${{ inputs.llvm }} == 'true' ]]; then
-        (
-          BEFORE=$(getAvailableSpace)
-
-          sudo rm -rf /usr/lib/llvm* || true
-
-          AFTER=$(getAvailableSpace)
-          SAVED=$((AFTER-BEFORE))
-          printSavedSpace $SAVED "Haskell runtime"
-        )&
+          remove "LLVM" /usr/lib/llvm* &
         fi
 
         if [[ ${{ inputs.snap }} == 'true' ]]; then
         (
-          BEFORE=$(getAvailableSpace)
-
           sudo systemctl stop snapd.service &>/dev/null || true
           sudo umount --recursive /snap/*/* &>/dev/null || true
-          sudo rm -rf  ~/snap /snap /var/snap /var/lib/snapd /usr/lib/snapd || true
-
-          AFTER=$(getAvailableSpace)
-          SAVED=$((AFTER-BEFORE))
-          printSavedSpace $SAVED "Snap runtime"
+          remove "Snap" ~/snap /snap /var/snap /var/lib/snapd /usr/lib/snapd
         )&
         fi
 
         if [[ ${{ inputs.swift }} == 'true' ]]; then
-        (
-          BEFORE=$(getAvailableSpace)
-
-          sudo rm -rf /usr/share/swift || true
-
-          AFTER=$(getAvailableSpace)
-          SAVED=$((AFTER-BEFORE))
-          printSavedSpace $SAVED "Swift runtime"
-        )&
+          remove "Swift runtime" /usr/share/swift &
         fi
 
         if [[ ${{ inputs.rust }} == 'true' ]]; then
-        (
-          BEFORE=$(getAvailableSpace)
-
-          sudo rm -rf /home/runner/.cargo || true
-          sudo rm -rf /home/runner/.rustup || true
-          sudo rm -rf /home/runneradmin/.cargo || true
-          sudo rm -rf /home/runneradmin/.rustup || true
-          sudo rm -rf /etc/skel/.rustup || true
-
-          AFTER=$(getAvailableSpace)
-          SAVED=$((AFTER-BEFORE))
-          printSavedSpace $SAVED "Rust runtime"
-        )&
+          remove "Rust runtime" /home/{runner,runneradmin}/{.cargo,.rustup} /etc/skel/.rustup &
         fi
 
         if [[ ${{ inputs.usrlocal }} == 'true' ]]; then
-        (
-          BEFORE=$(getAvailableSpace)
-
-          sudo rm -rf /usr/local || true
-
-          AFTER=$(getAvailableSpace)
-          SAVED=$((AFTER-BEFORE))
-          printSavedSpace $SAVED "/usr/local"
-        )&
+          remove "/usr/local" /usr/local &
         fi
 
         if [[ ${{ inputs.opt }} == 'true' ]]; then
-        (
-          BEFORE=$(getAvailableSpace)
+          remove "/opt" /opt &
+        fi
 
-          sudo rm -rf /opt || true
-
-          AFTER=$(getAvailableSpace)
-          SAVED=$((AFTER-BEFORE))
-          printSavedSpace $SAVED "/opt"
-        )&
+        if [[ ${{ inputs.tool-cache }} == 'true' ]]; then
+          remove "Tool cache" "$AGENT_TOOLSDIRECTORY"
         fi
 
         if [[ ${{ inputs.docker-images }} == 'true' ]]; then
@@ -464,29 +338,10 @@ runs:
         )&
         fi
 
-        if [[ ${{ inputs.tool-cache }} == 'true' ]]; then
-        (
-          BEFORE=$(getAvailableSpace)
-
-          sudo rm -rf "$AGENT_TOOLSDIRECTORY" || true
-
-          AFTER=$(getAvailableSpace)
-          SAVED=$((AFTER-BEFORE))
-          printSavedSpace $SAVED "Tool cache"
-        )&
-        fi
-
         if [[ ${{ inputs.swap-storage }} == 'true' ]]; then
         (
-          BEFORE=$(getAvailableSpace)
-
           sudo swapoff -a || true
-          sudo rm -f /mnt/swapfile || true
-          free -h
-
-          AFTER=$(getAvailableSpace)
-          SAVED=$((AFTER-BEFORE))
-          printSavedSpace $SAVED "Swap storage"
+          remove "Swap storage" /mnt/swapfile
         )&
         fi
 
