@@ -86,7 +86,9 @@ runs:
 
           echo ""
           printSeparationLine '*' 80
-          echo "=> ${title}: Saved $(formatByteCount $saved): in ${time} seconds"
+          epsilon=0.001 # avoid divide by zero failures
+          RATE=$(awk "BEGIN {printf \"%.2f\", $saved/($time + $epsilon)}")
+          echo "=> ${title}: Saved $(formatByteCount $saved): in ${time} seconds : rate = ${RATE} GB/sec"
           printSeparationLine '*' 80
           echo ""
         }
