@@ -227,18 +227,12 @@ runs:
 
           pkgs=$(list_installed_dpkg 'aspnetcore-*' 'dotnet-*' 'llvm-*' '*php*' 'mongodb-*' 'mysql-*' azure-cli google-chrome-stable firefox powershell mono-devel libgl1-mesa-dri 'google-cloud-*' 'gcloud-*' || true)
 
-          gcloud_prerm='#!/bin/sh
-          echo $0
           if [ -d "/usr/lib/google-cloud-sdk" ]; then
             echo "Cleaning Google Cloud CLI files..."
-            find /usr/lib/google-cloud-sdk -type f -delete -print | wc -l
-            rm -rf /usr/lib/google-cloud-sdk
+            fast_rmdir /usr/lib/google-cloud-sdk || true
             echo "Cleaning Google Cloud CLI manuals..."
-            find /usr/share/man -type f -name "gcloud*" -delete -print | wc -l
-          fi'
-
-          echo "$gcloud_prerm" | sudo tee /var/lib/dpkg/info/google-cloud-cli-anthoscli.prerm >/dev/null
-          echo "$gcloud_prerm" | sudo tee /var/lib/dpkg/info/google-cloud-cli.prerm >/dev/null
+            fast_rmdir  /usr/share/man || true
+          fi
 
           sudo apt-get remove --autoremove -y $pkgs || echo "::warning::The command [sudo apt-get remove -y] failed to complete successfully. Proceeding..."
           sudo apt-get clean || echo "::warning::The command [sudo apt-get clean] failed to complete successfully. Proceeding..."
