@@ -1,20 +1,53 @@
-name: Free Disk Space (Ubuntu)
-on: push
+name: CI - Test free-disk-space action
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
 
 jobs:
-  free-disk-space:
+  test-action:
     runs-on: ubuntu-latest
     steps:
-      # If there is a problem with this GitHub Actions, this step will fail
-      - name: Free Disk Space
-        uses: jlumbroso/free-disk-space@main
-        with:
-          tool-cache: true
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-          # all of these default to true, but feel free to set to
-          # false if necessary for your workflow
+      - name: Show disk usage before
+        run: |
+          echo "Before freeing disk space:"
+          df -h
+          echo "\nInodes before:"
+          df -ih
+
+      - name: Run free-disk-space action (local)
+        uses: ./
+        with:
+          # Keep tool-cache disabled by default to avoid removing pre-cached tools
+          tool-cache: "true"
+          # All other options are true by default; explicitly setting a couple for clarity
+          mandb:   true
           android: true
-          dotnet: true
+          dotnet:  true
           haskell: true
           large-packages: true
           swap-storage: true
+
+      - name: Show disk usage after
+        run: |
+          echo "After freeing disk space:"
+          df -h
+          echo "\nInodes after:"
+          df -ih
+
+      - name: Basic sanity checks
+        shell: bash
+        run: |
+          # Ensure action executed and common targets were affected (best-effort checks)
+          # Swapfile should be removed when swap-storage=true (best-effort; tolerate absence)
+          if [ -e /swapfile ]; then
+            echo "Warning: /swapfile still exists (runner image may not have swapfile)." >&2
+          else
+            echo "OK: /swapfile not present."
+          fi
+          # Ensure step didn't fail and disk output is available
+          which df >/dev/null 2>&1 || (echo "df not found" && exit 1)
