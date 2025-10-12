@@ -63,6 +63,11 @@ runs:
             echo "Removing directory: $1"
             sudo find "$1" -type f -delete -print | wc -l
             sudo rm -rf "$1"
+            # https://runcloud.io/blog/delete-directory-linux --> tldr; rsync of an empty directory is often the fastest way to bulk delete files
+            # Experimentation disproved this assertion that rsync is faster.  Intial tests :  find=268seconds, with rsync=383seconds
+            #sudo mkdir -p /tmp/empty
+            #sudo rsync -a --delete /tmp/empty/ "$1"/
+            #sudo rm -rf /tmp/empty "$1"
           fi
         }
 
