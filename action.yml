@@ -7,6 +7,10 @@ branding:
   color: "green"
 
 inputs:
+  mandb:
+    description: "Remove mandb and disable apt triggers"
+    required: false
+    default: "true"
   android:
     description: "Remove Android runtime"
     required: false
@@ -53,7 +57,7 @@ runs:
         # ======
         # MACROS
         # ======
-        
+
         fast_rmdir() {
           if [[ -d "$1" ]] && [[ -n "$1" ]] && [[ ! "$1" = "/" ]] && [[ ! "$1" = "~" ]]; then
             echo "Removing directory: $1"
@@ -138,13 +142,41 @@ runs:
         printDF "BEFORE CLEAN-UP:"
         echo ""
 
+        # Option: Remove man-page updates
+        #
+        # Disabling manpage generation and localization post-processing, can dramatically
+        # speed up apt operations (install/remove) on GitHub Actions or CI hosts.
+        # Why it’s slow:
+        # During apt install or apt remove, Ubuntu/Debian automatically runs dpkg triggers such as:
+        #        man-db (to update the whatis database and pre-compress man pages)
+        #        update-initramfs, update-grub, etc.
+        #        locale updates via language-pack-* or localepurge
+        # Preventing these triggers can save 30–90 seconds per large apt-get block in Ubuntu CI environments.
+
+        if [[ ${{ inputs.mandb }} == 'true' ]]; then
+          STAGE_START_TIME=$(date +%s)
+          BEFORE=$(getAvailableSpace)
+
+          sudo rm -f /var/lib/man-db/auto-update
+          sudo dpkg-divert --local --rename --add /usr/bin/mandb && sudo ln -s /bin/true /usr/bin/mandb
+          sudo apt-get purge -y man-db manpages manpages-dev
+          sudo apt-get autoremove -y
+          sudo dpkg-divert --rename --remove /usr/bin/mandb
+
+          AFTER=$(getAvailableSpace)
+          SAVED=$((AFTER-BEFORE))
+          STAGE_STOP_TIME=$(date +%s)
+          STAGE_ELAPSE_TIME=$((STAGE_STOP_TIME - STAGE_START_TIME))
+          printSavedSpace $SAVED "man page indexing intial removals and disabling" ${STAGE_ELAPSE_TIME}
+        fi
+
 
         # Option: Remove Android library
 
         if [[ ${{ inputs.android }} == 'true' ]]; then
           STAGE_START_TIME=$(date +%s)
           BEFORE=$(getAvailableSpace)
-          
+
           fast_rmdir /usr/local/lib/android || true
 
           AFTER=$(getAvailableSpace)
@@ -162,7 +194,7 @@ runs:
 
           # https://github.community/t/bigger-github-hosted-runners-disk-space/17267/11
           fast_rmdir /usr/share/dotnet || true
-          
+
           AFTER=$(getAvailableSpace)
           SAVED=$((AFTER-BEFORE))
           STAGE_STOP_TIME=$(date +%s)
@@ -178,7 +210,7 @@ runs:
 
           fast_rmdir /opt/ghc || true
           fast_rmdir /usr/local/.ghcup || true
-          
+
           AFTER=$(getAvailableSpace)
           SAVED=$((AFTER-BEFORE))
           STAGE_STOP_TIME=$(date +%s)
@@ -241,7 +273,7 @@ runs:
           BEFORE=$(getAvailableSpace)
 
           fast_rmdir "$AGENT_TOOLSDIRECTORY" || true
-          
+
           AFTER=$(getAvailableSpace)
           SAVED=$((AFTER-BEFORE))
           STAGE_STOP_TIME=$(date +%s)
@@ -258,7 +290,7 @@ runs:
           sudo swapoff -a || true
           sudo rm -f /mnt/swapfile || true
           free -h
-          
+
           AFTER=$(getAvailableSpace)
           SAVED=$((AFTER-BEFORE))
           STAGE_STOP_TIME=$(date +%s)
