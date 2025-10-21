@@ -173,22 +173,22 @@ runs:
           runAptRemove() {
             local level="$1"
             shift
-            local args=("$@")
+            local packages=("$@")
 
-            local cmd=(sudo apt-get remove -y "${args[@]}")
+            local cmd=(sudo apt-get remove -y --fix-missing "${packages[@]}")
 
             "${cmd[@]}" || echo "::${level}::The command [${cmd[@]}] failed to complete successfully. Proceeding..."
           }
 
           runAptRemove warning '^aspnetcore-.*'
-          runAptRemove warning '^dotnet-.*' --fix-missing
-          runAptRemove warning '^llvm-.*' --fix-missing
-          runAptRemove warning 'php.*' --fix-missing
-          runAptRemove warning '^mongodb-.*' --fix-missing
-          runAptRemove warning '^mysql-.*' --fix-missing
-          runAptRemove warning azure-cli google-chrome-stable firefox powershell mono-devel libgl1-mesa-dri --fix-missing
-          runAptRemove debug '^google-cloud-sdk$' --fix-missing
-          runAptRemove debug '^google-cloud-cli$' --fix-missing
+          runAptRemove warning '^dotnet-.*'
+          runAptRemove warning '^llvm-.*'
+          runAptRemove warning 'php.*'
+          runAptRemove warning '^mongodb-.*'
+          runAptRemove warning '^mysql-.*'
+          runAptRemove warning azure-cli google-chrome-stable firefox powershell mono-devel libgl1-mesa-dri
+          runAptRemove debug '^google-cloud-sdk$'
+          runAptRemove debug '^google-cloud-cli$'
           sudo apt-get autoremove -y || echo "::warning::The command [sudo apt-get autoremove -y] failed to complete successfully. Proceeding..."
           sudo apt-get clean || echo "::warning::The command [sudo apt-get clean] failed to complete successfully. Proceeding..."
 
