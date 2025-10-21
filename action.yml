@@ -113,8 +113,6 @@ runs:
           printSeparationLine '=' 80
         }
 
-
-
         # ======
         # SCRIPT
         # ======
@@ -171,16 +169,26 @@ runs:
 
         if [[ ${{ inputs.large-packages }} == 'true' ]]; then
           BEFORE=$(getAvailableSpace)
-          
-          sudo apt-get remove -y '^aspnetcore-.*' || echo "::warning::The command [sudo apt-get remove -y '^aspnetcore-.*'] failed to complete successfully. Proceeding..."
-          sudo apt-get remove -y '^dotnet-.*' --fix-missing || echo "::warning::The command [sudo apt-get remove -y '^dotnet-.*' --fix-missing] failed to complete successfully. Proceeding..."
-          sudo apt-get remove -y '^llvm-.*' --fix-missing || echo "::warning::The command [sudo apt-get remove -y '^llvm-.*' --fix-missing] failed to complete successfully. Proceeding..."
-          sudo apt-get remove -y 'php.*' --fix-missing || echo "::warning::The command [sudo apt-get remove -y 'php.*' --fix-missing] failed to complete successfully. Proceeding..."
-          sudo apt-get remove -y '^mongodb-.*' --fix-missing || echo "::warning::The command [sudo apt-get remove -y '^mongodb-.*' --fix-missing] failed to complete successfully. Proceeding..."
-          sudo apt-get remove -y '^mysql-.*' --fix-missing || echo "::warning::The command [sudo apt-get remove -y '^mysql-.*' --fix-missing] failed to complete successfully. Proceeding..."
-          sudo apt-get remove -y azure-cli google-chrome-stable firefox powershell mono-devel libgl1-mesa-dri --fix-missing || echo "::warning::The command [sudo apt-get remove -y azure-cli google-chrome-stable firefox powershell mono-devel libgl1-mesa-dri --fix-missing] failed to complete successfully. Proceeding..."
-          sudo apt-get remove -y google-cloud-sdk --fix-missing || echo "::debug::The command [sudo apt-get remove -y google-cloud-sdk --fix-missing] failed to complete successfully. Proceeding..."
-          sudo apt-get remove -y google-cloud-cli --fix-missing || echo "::debug::The command [sudo apt-get remove -y google-cloud-cli --fix-missing] failed to complete successfully. Proceeding..."
+
+          runAptRemove() {
+            local level="$1"
+            shift
+            local args=("$@")
+
+            local cmd=(sudo apt-get remove -y "${args[@]}")
+
+            "${cmd[@]}" || echo "::${level}::The command [${cmd[@]}] failed to complete successfully. Proceeding..."
+          }
+
+          runAptRemove warning '^aspnetcore-.*'
+          runAptRemove warning '^dotnet-.*' --fix-missing
+          runAptRemove warning '^llvm-.*' --fix-missing
+          runAptRemove warning 'php.*' --fix-missing
+          runAptRemove warning '^mongodb-.*' --fix-missing
+          runAptRemove warning '^mysql-.*' --fix-missing
+          runAptRemove warning azure-cli google-chrome-stable firefox powershell mono-devel libgl1-mesa-dri --fix-missing
+          runAptRemove debug '^google-cloud-sdk$' --fix-missing
+          runAptRemove debug '^google-cloud-cli$' --fix-missing
           sudo apt-get autoremove -y || echo "::warning::The command [sudo apt-get autoremove -y] failed to complete successfully. Proceeding..."
           sudo apt-get clean || echo "::warning::The command [sudo apt-get clean] failed to complete successfully. Proceeding..."
 
