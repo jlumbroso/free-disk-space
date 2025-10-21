@@ -5,9 +5,10 @@ jobs:
   free-disk-space:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v5
       # If there is a problem with this GitHub Actions, this step will fail
       - name: Free Disk Space
-        uses: jlumbroso/free-disk-space@main
+        uses: ./
         with:
           tool-cache: true
 
@@ -17,4 +18,6 @@ jobs:
           dotnet: true
           haskell: true
           large-packages: true
+          large-packages-keep: |
+            ^llvm-.*$
           swap-storage: true

@@ -26,6 +26,10 @@ inputs:
     description: "Remove large packages"
     required: false
     default: "true"
+  large-packages-keep:
+    description: "Regex for packages to keep when removing large packages"
+    required: false
+    default: ""
 
   docker-images:
     description: "Remove Docker images"
@@ -173,9 +177,32 @@ runs:
           runAptRemove() {
             local level="$1"
             shift
-            local packages=("$@")
 
-            local cmd=(sudo apt-get remove -y --fix-missing "${packages[@]}")
+            local combined_regex
+            combined_regex=$(printf '%s\n' "$@" | tr -d "'" | paste -sd'|' -)
+
+            local matched
+            matched=$(dpkg-query -W -f '${binary:Package}\n' | grep -E "$combined_regex" | sort -u || true)
+
+            if [[ -z "$matched" ]]; then
+              return
+            fi
+
+            local keep_regex
+            keep_regex=$(printf '%s' "${{ inputs.large-packages-keep }}" | sed 's/[[:space:]]\+$//')
+            if [[ -n "$keep_regex" ]]; then
+              printf '%s\n' "$matched" | grep -E "$keep_regex" | sed "s/^/::${level}::Keeping package [/;s/$/]/" || true
+              matched=$(printf '%s\n' "$matched" | grep -Ev "$keep_regex" | sort -u || true)
+            fi
+
+            if [[ -z "$matched" ]]; then
+              return
+            fi
+
+            local cmd=(sudo apt-get remove -y --fix-missing)
+            while IFS= read -r pkg; do
+              cmd+=("$pkg")
+            done <<< "$matched"
 
             "${cmd[@]}" || echo "::${level}::The command [${cmd[@]}] failed to complete successfully. Proceeding..."
           }
