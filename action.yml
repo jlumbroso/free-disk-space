@@ -180,15 +180,15 @@ runs:
             "${cmd[@]}" || echo "::${level}::The command [${cmd[@]}] failed to complete successfully. Proceeding..."
           }
 
-          runAptRemove warning '^aspnetcore-.*'
-          runAptRemove warning '^dotnet-.*'
-          runAptRemove warning '^llvm-.*'
-          runAptRemove warning 'php.*'
-          runAptRemove warning '^mongodb-.*'
-          runAptRemove warning '^mysql-.*'
-          runAptRemove warning azure-cli google-chrome-stable firefox powershell mono-devel libgl1-mesa-dri
-          runAptRemove debug '^google-cloud-sdk$'
-          runAptRemove debug '^google-cloud-cli$'
+          runAptRemove warning \
+            azure-cli \
+            firefox \
+            google-chrome-stable \
+            libgl1-mesa-dri \
+            mono-devel \
+            powershell \
+            '(php|^(aspnetcore|dotnet|llvm|mongodb|mysql)-).*$'
+          runAptRemove debug google-cloud-sdk google-cloud-cli
           sudo apt-get autoremove -y || echo "::warning::The command [sudo apt-get autoremove -y] failed to complete successfully. Proceeding..."
           sudo apt-get clean || echo "::warning::The command [sudo apt-get clean] failed to complete successfully. Proceeding..."
 
