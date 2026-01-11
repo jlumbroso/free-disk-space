@@ -34,6 +34,11 @@ jobs:
         large-packages: true
         docker-images: true
         swap-storage: true
+        
+        # all rm actions will be applied relative to the given path,
+        # helpful for cleaning from within a custom container.
+        # "" is the default, i.e. /.
+        chroot: /host
 ```
 ## Options
 

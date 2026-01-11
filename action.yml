@@ -44,12 +44,22 @@ inputs:
     required: false
     default: "true"
 
+  chroot:
+    description: |
+      Applies removal relative to the given directory (helpful for freeing up from within a custom image).
+      
+      If one mounts the docker socket to the guest and if the docker CLI is also installed, docker-images will work
+      as well.
+      
+      large-packages, tool-cache and swap-storage will still apply to the root within the custom image.
+    required: false
+    default: ""
+
 runs:
   using: "composite"
   steps:
     - shell: bash
       run: |
-
         # ======
         # MACROS
         # ======
@@ -101,19 +111,30 @@ runs:
           printSeparationLine '=' 80
           echo "${caption}"
           echo ""
-          echo "$ dh -h /"
+          echo "$ dh -h ${{ inputs.chroot }}/"
           echo ""
-          df -h /
-          echo "$ dh -a /"
+          df -h ${{ inputs.chroot }}/
+          echo "$ dh -a ${{ inputs.chroot }}/"
           echo ""
-          df -a /
-          echo "$ dh -a"
+          df -a ${{ inputs.chroot }}/
+          echo "$ dh -a ${{ inputs.chroot }}"
           echo ""
           df -a
           printSeparationLine '=' 80
         }
 
-
+        # to run depending on already being root/sudo is available 
+        run() {
+          # sudo necessary?
+          if [[ $EUID -eq 0 ]]; then
+            "$@"
+          elif command -v sudo >/dev/null 2>&1 && sudo -n true 2>/dev/null; then
+            sudo "$@"
+          else
+            echo "Warning: sudo unavailable, running without: $@"
+            "$@"
+          fi
+        }
 
         # ======
         # SCRIPT
@@ -122,20 +143,19 @@ runs:
         # Display initial disk space stats
 
         AVAILABLE_INITIAL=$(getAvailableSpace)
-        AVAILABLE_ROOT_INITIAL=$(getAvailableSpace '/')
+        AVAILABLE_ROOT_INITIAL=$(getAvailableSpace '${{ inputs.chroot }}/')
 
         printDH "BEFORE CLEAN-UP:"
         echo ""
 
-
         # Option: Remove Android library
 
         if [[ ${{ inputs.android }} == 'true' ]]; then
-          BEFORE=$(getAvailableSpace)
+          BEFORE=$(getAvailableSpace '${{ inputs.chroot }}')
           
-          sudo rm -rf /usr/local/lib/android || true
+          run rm -rf '${{ inputs.chroot }}/usr/local/lib/android' || true
 
-          AFTER=$(getAvailableSpace)
+          AFTER=$(getAvailableSpace '${{ inputs.chroot }}')
           SAVED=$((AFTER-BEFORE))
           printSavedSpace $SAVED "Android library"
         fi
@@ -143,12 +163,12 @@ runs:
         # Option: Remove .NET runtime
 
         if [[ ${{ inputs.dotnet }} == 'true' ]]; then
-          BEFORE=$(getAvailableSpace)
+          BEFORE=$(getAvailableSpace '${{ inputs.chroot }}')
 
           # https://github.community/t/bigger-github-hosted-runners-disk-space/17267/11
-          sudo rm -rf /usr/share/dotnet || true
+          run rm -rf '${{ inputs.chroot }}/usr/share/dotnet' || true
           
-          AFTER=$(getAvailableSpace)
+          AFTER=$(getAvailableSpace '${{ inputs.chroot }}')
           SAVED=$((AFTER-BEFORE))
           printSavedSpace $SAVED ".NET runtime"
         fi
@@ -156,12 +176,12 @@ runs:
         # Option: Remove Haskell runtime
 
         if [[ ${{ inputs.haskell }} == 'true' ]]; then
-          BEFORE=$(getAvailableSpace)
+          BEFORE=$(getAvailableSpace '${{ inputs.chroot }}')
 
-          sudo rm -rf /opt/ghc || true
-          sudo rm -rf /usr/local/.ghcup || true
+          run rm -rf '${{ inputs.chroot }}/opt/ghc' || true
+          run rm -rf '${{ inputs.chroot }}/usr/local/.ghcup' || true
           
-          AFTER=$(getAvailableSpace)
+          AFTER=$(getAvailableSpace '${{ inputs.chroot }}')
           SAVED=$((AFTER-BEFORE))
           printSavedSpace $SAVED "Haskell runtime"
         fi
@@ -172,17 +192,17 @@ runs:
         if [[ ${{ inputs.large-packages }} == 'true' ]]; then
           BEFORE=$(getAvailableSpace)
           
-          sudo apt-get remove -y '^aspnetcore-.*' || echo "::warning::The command [sudo apt-get remove -y '^aspnetcore-.*'] failed to complete successfully. Proceeding..."
-          sudo apt-get remove -y '^dotnet-.*' --fix-missing || echo "::warning::The command [sudo apt-get remove -y '^dotnet-.*' --fix-missing] failed to complete successfully. Proceeding..."
-          sudo apt-get remove -y '^llvm-.*' --fix-missing || echo "::warning::The command [sudo apt-get remove -y '^llvm-.*' --fix-missing] failed to complete successfully. Proceeding..."
-          sudo apt-get remove -y 'php.*' --fix-missing || echo "::warning::The command [sudo apt-get remove -y 'php.*' --fix-missing] failed to complete successfully. Proceeding..."
-          sudo apt-get remove -y '^mongodb-.*' --fix-missing || echo "::warning::The command [sudo apt-get remove -y '^mongodb-.*' --fix-missing] failed to complete successfully. Proceeding..."
-          sudo apt-get remove -y '^mysql-.*' --fix-missing || echo "::warning::The command [sudo apt-get remove -y '^mysql-.*' --fix-missing] failed to complete successfully. Proceeding..."
-          sudo apt-get remove -y azure-cli google-chrome-stable firefox powershell mono-devel libgl1-mesa-dri --fix-missing || echo "::warning::The command [sudo apt-get remove -y azure-cli google-chrome-stable firefox powershell mono-devel libgl1-mesa-dri --fix-missing] failed to complete successfully. Proceeding..."
-          sudo apt-get remove -y google-cloud-sdk --fix-missing || echo "::debug::The command [sudo apt-get remove -y google-cloud-sdk --fix-missing] failed to complete successfully. Proceeding..."
-          sudo apt-get remove -y google-cloud-cli --fix-missing || echo "::debug::The command [sudo apt-get remove -y google-cloud-cli --fix-missing] failed to complete successfully. Proceeding..."
-          sudo apt-get autoremove -y || echo "::warning::The command [sudo apt-get autoremove -y] failed to complete successfully. Proceeding..."
-          sudo apt-get clean || echo "::warning::The command [sudo apt-get clean] failed to complete successfully. Proceeding..."
+          run apt-get remove -y '^aspnetcore-.*' || echo "::warning::The command [run apt-get remove -y '^aspnetcore-.*'] failed to complete successfully. Proceeding..."
+          run apt-get remove -y '^dotnet-.*' --fix-missing || echo "::warning::The command [run apt-get remove -y '^dotnet-.*' --fix-missing] failed to complete successfully. Proceeding..."
+          run apt-get remove -y '^llvm-.*' --fix-missing || echo "::warning::The command [run apt-get remove -y '^llvm-.*' --fix-missing] failed to complete successfully. Proceeding..."
+          run apt-get remove -y 'php.*' --fix-missing || echo "::warning::The command [run apt-get remove -y 'php.*' --fix-missing] failed to complete successfully. Proceeding..."
+          run apt-get remove -y '^mongodb-.*' --fix-missing || echo "::warning::The command [run apt-get remove -y '^mongodb-.*' --fix-missing] failed to complete successfully. Proceeding..."
+          run apt-get remove -y '^mysql-.*' --fix-missing || echo "::warning::The command [run apt-get remove -y '^mysql-.*' --fix-missing] failed to complete successfully. Proceeding..."
+          run apt-get remove -y azure-cli google-chrome-stable firefox powershell mono-devel libgl1-mesa-dri --fix-missing || echo "::warning::The command [run apt-get remove -y azure-cli google-chrome-stable firefox powershell mono-devel libgl1-mesa-dri --fix-missing] failed to complete successfully. Proceeding..."
+          run apt-get remove -y google-cloud-sdk --fix-missing || echo "::debug::The command [run apt-get remove -y google-cloud-sdk --fix-missing] failed to complete successfully. Proceeding..."
+          run apt-get remove -y google-cloud-cli --fix-missing || echo "::debug::The command [run apt-get remove -y google-cloud-cli --fix-missing] failed to complete successfully. Proceeding..."
+          run apt-get autoremove -y || echo "::warning::The command [run apt-get autoremove -y] failed to complete successfully. Proceeding..."
+          run apt-get clean || echo "::warning::The command [run apt-get clean] failed to complete successfully. Proceeding..."
 
           AFTER=$(getAvailableSpace)
           SAVED=$((AFTER-BEFORE))
@@ -194,7 +214,7 @@ runs:
         if [[ ${{ inputs.docker-images }} == 'true' ]]; then
           BEFORE=$(getAvailableSpace)
 
-          sudo docker image prune --all --force || true
+          run docker image prune --all --force || true
 
           AFTER=$(getAvailableSpace)
           SAVED=$((AFTER-BEFORE))
@@ -207,7 +227,7 @@ runs:
         if [[ ${{ inputs.tool-cache }} == 'true' ]]; then
           BEFORE=$(getAvailableSpace)
 
-          sudo rm -rf "$AGENT_TOOLSDIRECTORY" || true
+          run rm -rf "$AGENT_TOOLSDIRECTORY" || true
           
           AFTER=$(getAvailableSpace)
           SAVED=$((AFTER-BEFORE))
@@ -219,8 +239,8 @@ runs:
         if [[ ${{ inputs.swap-storage }} == 'true' ]]; then
           BEFORE=$(getAvailableSpace)
 
-          sudo swapoff -a || true
-          sudo rm -f /mnt/swapfile || true
+          run swapoff -a || true
+          run rm -f '${{ inputs.chroot }}/mnt/swapfile' || true
           free -h
           
           AFTER=$(getAvailableSpace)
@@ -233,7 +253,7 @@ runs:
         # Output saved space statistic
 
         AVAILABLE_END=$(getAvailableSpace)
-        AVAILABLE_ROOT_END=$(getAvailableSpace '/')
+        AVAILABLE_ROOT_END=$(getAvailableSpace '${{ inputs.chroot }}/')
 
         echo ""
         printDH "AFTER CLEAN-UP:"
@@ -241,7 +261,7 @@ runs:
         echo ""
         echo ""
 
-        echo "/dev/root:"
+        echo "${{ inputs.chroot }}/dev/root:"
         printSavedSpace $((AVAILABLE_ROOT_END - AVAILABLE_ROOT_INITIAL))
         echo "overall:"
         printSavedSpace $((AVAILABLE_END - AVAILABLE_INITIAL))
