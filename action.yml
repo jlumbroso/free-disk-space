@@ -23,7 +23,7 @@ inputs:
   # option inspired by:
   # https://github.com/apache/flink/blob/master/tools/azure-pipelines/free_disk_space.sh
   large-packages:
-    description: "Remove large packages"
+    description: "Remove large misc. packages — includes azure-cli, Chrome, Firefox, PowerShell, mono, and the llvm-, php-, mongodb-, mysql-, dotnet- and aspnetcore- package families. Respects subject toggles: `dotnet: false` exempts .NET from this sweep."
     required: false
     default: "true"
 
@@ -186,9 +186,19 @@ runs:
 
         if [[ "$LARGE_PACKAGES" == 'true' ]]; then
           BEFORE=$(getAvailableSpace)
-          
-          sudo apt-get remove -y '^aspnetcore-.*' || echo "::warning::The command [sudo apt-get remove -y '^aspnetcore-.*'] failed to complete successfully. Proceeding..."
-          sudo apt-get remove -y '^dotnet-.*' --fix-missing || echo "::warning::The command [sudo apt-get remove -y '^dotnet-.*' --fix-missing] failed to complete successfully. Proceeding..."
+
+          # PRECEDENCE: a specific subject-toggle outranks this general category.
+          # Setting `dotnet: false` keeps .NET everywhere, including the apt
+          # packages this block would otherwise sweep up — which is what issue #33
+          # reported. The same law applies to any future subject key: name it,
+          # exempt it here, no new grammar needed.
+          if [[ "$DOTNET" == 'true' ]]; then
+            sudo apt-get remove -y '^aspnetcore-.*' || echo "::warning::The command [sudo apt-get remove -y '^aspnetcore-.*'] failed to complete successfully. Proceeding..."
+            sudo apt-get remove -y '^dotnet-.*' --fix-missing || echo "::warning::The command [sudo apt-get remove -y '^dotnet-.*' --fix-missing] failed to complete successfully. Proceeding..."
+          else
+            echo "::notice::dotnet: false — .NET packages exempted from large-packages (dotnet-*, aspnetcore-*)."
+          fi
+
           sudo apt-get remove -y '^llvm-.*' --fix-missing || echo "::warning::The command [sudo apt-get remove -y '^llvm-.*' --fix-missing] failed to complete successfully. Proceeding..."
           sudo apt-get remove -y 'php.*' --fix-missing || echo "::warning::The command [sudo apt-get remove -y 'php.*' --fix-missing] failed to complete successfully. Proceeding..."
           sudo apt-get remove -y '^mongodb-.*' --fix-missing || echo "::warning::The command [sudo apt-get remove -y '^mongodb-.*' --fix-missing] failed to complete successfully. Proceeding..."

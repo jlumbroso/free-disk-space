@@ -39,6 +39,8 @@ jobs:
 
 Most of the options are self-explanatory: each removes a category of thing, and the run prints how much space each one actually freed.
 
+> **Specific options override general ones.** `dotnet: false` keeps .NET even where `large-packages: true` would otherwise remove it. The run logs a notice when an exemption fires, so you can see it happen.
+
 `preinstalled-runtimes` removes the pre-cached tools (Node, Go, Python, Ruby, …) loaded into a runner's environment, [installed in the path given by the `AGENT_TOOLSDIRECTORY` environment variable](https://github.com/actions/virtual-environments/blob/5a2cb18a48bce5da183486b95f5494e4fd0c0640/images/linux/scripts/installers/configure-environment.sh#L25-L29) (the same variable is used across Windows/macOS/Linux runners — see [`setup-python`](https://github.com/actions/setup-python)). It frees about 6 GB. This option was [suggested](https://github.com/actions/virtual-environments/issues/2875#issuecomment-1163392159) by [@miketimofeev](https://github.com/miketimofeev).
 
 > **Renamed in v2.0.0.** This option used to be called `tool-cache`. The old name still works and will keep working for the whole v2 line, but it prints a deprecation warning — please rename it when convenient. The new name says what is removed rather than where it is cached.
@@ -56,7 +58,7 @@ Most options, when they bite, produce an error that names the thing that is miss
 | `android` | Android SDK/NDK | direct — your Android build cannot find the SDK |
 | `dotnet` | the .NET SDK directory | direct — `dotnet` is not on `PATH` |
 | `haskell` | GHC toolchain | direct — `ghc`/`stack` is not on `PATH` |
-| `large-packages` | azure-cli, Chrome, Firefox, PowerShell, mono, LLVM, PHP, MongoDB, MySQL, the Google Cloud SDK/CLI — **and also the `dotnet-*` and `aspnetcore-*` packages** (see below) | direct — the command is not found. **This is also the slow one** (several minutes; [#40](../../issues/40)) |
+| `large-packages` | azure-cli, Chrome, Firefox, PowerShell, mono, LLVM, PHP, MongoDB, MySQL, the Google Cloud SDK/CLI — and the `dotnet-*`/`aspnetcore-*` packages **unless you set `dotnet: false`** | direct — the command is not found. **This is also the slow one** (several minutes; [#40](../../issues/40)) |
 | `docker-images` | pre-pulled Docker images | direct-ish — your job re-pulls images it expected to be cached, so it is slower rather than broken |
 | `preinstalled-runtimes` *(default `false`)* | the pre-installed Node/Go/Python/Ruby toolchains that `actions/setup-*` uses | **indirect** — `actions/setup-python` and friends still work, but download their runtime instead of finding it. Usually just slower; occasionally a pinned version is not available to download |
 | `swap-storage` *(default `false`)* | the runner's swap file | **indirect, and the one to read twice** — see below |
@@ -85,14 +87,14 @@ That reasoning, and the point at which it stops applying, are written up in [`do
 
 ### I set `dotnet: false` and dotnet was still removed. Why?
 
-Because `large-packages` also removes it, and `large-packages` defaults to `true`. Two different options delete dotnet by two different mechanisms:
+**Fixed in v2.0.1.** It used to happen because two different options delete .NET by two different mechanisms:
 
 - `dotnet` removes the **SDK directory** (`/usr/share/dotnet`)
 - `large-packages` removes the **apt packages** (`dotnet-*` and `aspnetcore-*`)
 
-So `dotnet: false` on its own is not enough — you currently also need `large-packages: false`, which is a blunt instrument since it removes a dozen unrelated things.
+With `large-packages: true` — the default — setting `dotnet: false` could not keep .NET. Now it can: **the specific option overrides the general one**, so `dotnet: false` exempts .NET from the `large-packages` sweep as well, and the run logs a notice saying so. You get the rest of the cleanup without losing the thing you needed.
 
-This is a known bug, not intended behaviour; thanks to [@ashleney](https://github.com/ashleney) for reporting it in [#33](../../issues/33), where the fix is tracked.
+Thanks to [@ashleney](https://github.com/ashleney) for reporting it in [#33](../../issues/33).
 
 ### Can I run this only when the runner is actually low on disk?
 
