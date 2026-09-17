@@ -206,6 +206,8 @@ runs:
           sudo apt-get remove -y azure-cli google-chrome-stable firefox powershell mono-devel libgl1-mesa-dri --fix-missing || echo "::warning::The command [sudo apt-get remove -y azure-cli google-chrome-stable firefox powershell mono-devel libgl1-mesa-dri --fix-missing] failed to complete successfully. Proceeding..."
           sudo apt-get remove -y google-cloud-sdk --fix-missing || echo "::debug::The command [sudo apt-get remove -y google-cloud-sdk --fix-missing] failed to complete successfully. Proceeding..."
           sudo apt-get remove -y google-cloud-cli --fix-missing || echo "::debug::The command [sudo apt-get remove -y google-cloud-cli --fix-missing] failed to complete successfully. Proceeding..."
+          sudo apt-get remove -y microsoft-edge-stable --fix-missing || echo "::debug::The command [sudo apt-get remove -y microsoft-edge-stable --fix-missing] failed to complete successfully. Proceeding..."
+          sudo apt-get remove -y snapd --fix-missing || echo "::debug::The command [sudo apt-get remove -y snapd --fix-missing] failed to complete successfully. Proceeding..."
           sudo apt-get autoremove -y || echo "::warning::The command [sudo apt-get autoremove -y] failed to complete successfully. Proceeding..."
           sudo apt-get clean || echo "::warning::The command [sudo apt-get clean] failed to complete successfully. Proceeding..."
 
