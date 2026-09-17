@@ -41,7 +41,7 @@ inputs:
 
   # DEPRECATED alias, kept so no existing workflow breaks at v2.0.0.
   tool-cache:
-    description: "DEPRECATED — renamed to `preinstalled-runtimes` in v2.0.0. Still honoured; will be removed in a future major version."
+    description: "DEPRECATED — renamed to `preinstalled-runtimes`. Still honoured, and will keep working until v3.0.0; it prints a warning when used."
     required: false
     default: "false"
 
@@ -235,7 +235,7 @@ runs:
         # actually relies on the old name — an expected-absence stays quiet,
         # per the severity convention in docs/adr/0004.
         if [[ "$TOOL_CACHE" == 'true' ]]; then
-          echo "::warning::The 'tool-cache' input is deprecated and was renamed to 'preinstalled-runtimes' in v2.0.0. It still works, but please rename it; it will be removed in a future major version."
+          echo "::warning::The 'tool-cache' input is deprecated; it was renamed to 'preinstalled-runtimes'. It still works and will keep working until v3.0.0 — please rename it when convenient."
         fi
 
         if [[ "$PREINSTALLED_RUNTIMES" == 'true' || "$TOOL_CACHE" == 'true' ]]; then

@@ -45,6 +45,14 @@ Most of the options are self-explanatory: each removes a category of thing, and 
 
 > **Renamed.** This option used to be called `tool-cache`. The old name still works and will keep working, but it prints a deprecation warning — please rename it when convenient. The new name says what is removed rather than where it is cached.
 
+## Upgrading from v1 to v2
+
+Most workflows need no change.
+
+- If you set `tool-cache:`, rename it to `preinstalled-runtimes:`. The old name still works until v3.0.0 and prints a warning.
+- If you relied on swap being removed by default, add `swap-storage: true`. It now defaults to `false`, because removing swap can kill a job under memory pressure with no error pointing back here ([#12](../../issues/12)).
+- If you set `dotnet: false` and were surprised that .NET was still removed, that is fixed — a specific option now overrides a general one ([#33](../../issues/33)).
+
 ## FAQ
 
 ### What are the possible side effects of these settings?
