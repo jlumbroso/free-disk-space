@@ -109,20 +109,20 @@ runs:
           echo ""
         }
 
-        # macro to print output of dh with caption
-        printDH() {
+        # macro to print output of df with caption
+        printDF() {
           caption=${1:-}
 
           printSeparationLine '=' 80
           echo "${caption}"
           echo ""
-          echo "$ dh -h /"
+          echo "$ df -h /"
           echo ""
           df -h /
-          echo "$ dh -a /"
+          echo "$ df -a /"
           echo ""
           df -a /
-          echo "$ dh -a"
+          echo "$ df -a"
           echo ""
           df -a
           printSeparationLine '=' 80
@@ -139,7 +139,7 @@ runs:
         AVAILABLE_INITIAL=$(getAvailableSpace)
         AVAILABLE_ROOT_INITIAL=$(getAvailableSpace '/')
 
-        printDH "BEFORE CLEAN-UP:"
+        printDF "BEFORE CLEAN-UP:"
         echo ""
 
 
@@ -270,7 +270,7 @@ runs:
         AVAILABLE_ROOT_END=$(getAvailableSpace '/')
 
         echo ""
-        printDH "AFTER CLEAN-UP:"
+        printDF "AFTER CLEAN-UP:"
 
         echo ""
         echo ""
