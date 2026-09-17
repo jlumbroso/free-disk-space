@@ -109,19 +109,21 @@ Reported by [@gmij](https://github.com/gmij) in [#6](../../issues/6) back in 202
 Yes — decide in the workflow rather than in the action, so the condition is visible where the rest of your job logic lives. Check the free space first and gate the step on it:
 
 ```yaml
-    - name: Check free space
+    - name: Check available workspace space
       id: disk
+      shell: bash
       run: |
-        FREE_KB=$(df --output=avail -k "$GITHUB_WORKSPACE" | tail -1 | tr -d ' ')
-        echo "free_kb=$FREE_KB" >> "$GITHUB_OUTPUT"
+        available_kib=$(LC_ALL=C df -k --output=avail -- "$GITHUB_WORKSPACE" | awk 'NR == 2 {print $1}')
+        printf 'available_kib=%s\n' "$available_kib" >> "$GITHUB_OUTPUT"
 
-    - name: Free Disk Space (Ubuntu)
-      # run only if less than 20 GiB is available
-      if: fromJSON(steps.disk.outputs.free_kb) < 20971520
-      uses: jlumbroso/free-disk-space@main
+    - name: Free disk space when below 20 GiB
+      if: ${{ fromJSON(steps.disk.outputs.available_kib) < 20971520 }}
+      uses: jlumbroso/free-disk-space@v2
 ```
 
-The comparison is numeric, so compare in **KiB** rather than rounding to whole gigabytes first. `fromJSON` is what makes the output a number rather than a string — see GitHub's [expressions documentation](https://docs.github.com/en/actions/reference/workflows-and-actions/expressions).
+Adjust `20971520` to your threshold in KiB. Compare in **KiB** rather than rounding to whole gigabytes first, and note `fromJSON` — it is what makes the output a number rather than a string, so the comparison is numeric. See GitHub's [expressions documentation](https://docs.github.com/en/actions/reference/workflows-and-actions/expressions).
+
+This decides *whether* cleanup runs; it does not guarantee that cleanup brings you above the threshold.
 
 Requested by [@wiegell](https://github.com/wiegell) in [#22](../../issues/22).
 
