@@ -34,15 +34,21 @@ inputs:
 
   # option inspired by:
   # https://github.com/actions/virtual-environments/issues/2875#issuecomment-1163392159
+  preinstalled-runtimes:
+    description: "Remove pre-installed runtimes (Node, Go, Python, Ruby). ⚠️ Workflows using actions/setup-node, setup-python, setup-go or setup-ruby will re-download their runtime, and a pinned version may not be available."
+    required: false
+    default: "false"
+
+  # DEPRECATED alias, kept so no existing workflow breaks at v2.0.0.
   tool-cache:
-    description: "Remove image tool cache"
+    description: "DEPRECATED — renamed to `preinstalled-runtimes` in v2.0.0. Still honoured; will be removed in a future major version."
     required: false
     default: "false"
 
   swap-storage:
-    description: "Remove swap storage"
+    description: "Remove swap storage. ⚠️ Jobs that need swap may be killed under memory pressure, with no error mentioning this action — see #12. Off by default for that reason."
     required: false
-    default: "true"
+    default: "false"
 
 runs:
   using: "composite"
@@ -54,6 +60,7 @@ runs:
         HASKELL: ${{ inputs.haskell }}
         LARGE_PACKAGES: ${{ inputs.large-packages }}
         DOCKER_IMAGES: ${{ inputs.docker-images }}
+        PREINSTALLED_RUNTIMES: ${{ inputs.preinstalled-runtimes }}
         TOOL_CACHE: ${{ inputs.tool-cache }}
         SWAP_STORAGE: ${{ inputs.swap-storage }}
       run: |
@@ -212,14 +219,23 @@ runs:
         # Option: Remove tool cache
         # REF: https://github.com/actions/virtual-environments/issues/2875#issuecomment-1163392159
 
+        # `tool-cache` was renamed `preinstalled-runtimes` in v2.0.0. The old
+        # input is still honoured so no existing workflow breaks; either one
+        # being true removes the directory. The warning fires only when someone
+        # actually relies on the old name — an expected-absence stays quiet,
+        # per the severity convention in docs/adr/0004.
         if [[ "$TOOL_CACHE" == 'true' ]]; then
+          echo "::warning::The 'tool-cache' input is deprecated and was renamed to 'preinstalled-runtimes' in v2.0.0. It still works, but please rename it; it will be removed in a future major version."
+        fi
+
+        if [[ "$PREINSTALLED_RUNTIMES" == 'true' || "$TOOL_CACHE" == 'true' ]]; then
           BEFORE=$(getAvailableSpace)
 
           sudo rm -rf "$AGENT_TOOLSDIRECTORY" || true
-          
+
           AFTER=$(getAvailableSpace)
           SAVED=$((AFTER-BEFORE))
-          printSavedSpace $SAVED "Tool cache"
+          printSavedSpace $SAVED "Pre-installed runtimes"
         fi
 
         # Option: Remove Swap storage

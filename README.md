@@ -22,24 +22,98 @@ jobs:
     - name: Free Disk Space (Ubuntu)
       uses: jlumbroso/free-disk-space@main
       with:
-        # this might remove tools that are actually needed,
-        # if set to "true" but frees about 6 GB
-        tool-cache: false
-        
-        # all of these default to true, but feel free to set to
-        # "false" if necessary for your workflow
+        # these default to true — turn off whatever you actually need
         android: true
         dotnet: true
         haskell: true
         large-packages: true
         docker-images: true
-        swap-storage: true
+
+        # these default to FALSE, because their failures are hard to
+        # trace back to this action — see the FAQ below before enabling
+        preinstalled-runtimes: false
+        swap-storage: false
 ```
+
 ## Options
 
-Most of the options are self-explanatory.
+Most of the options are self-explanatory: each removes a category of thing, and the run prints how much space each one actually freed.
 
-The option `tool-cache` removes all the pre-cached tools (Node, Go, Python, Ruby, ...) that are loaded in a runner's environment, [installed in the path specified by the `AGENT_TOOLSDIRECTORY` environment variable](https://github.com/actions/virtual-environments/blob/5a2cb18a48bce5da183486b95f5494e4fd0c0640/images/linux/scripts/installers/configure-environment.sh#L25-L29) (the same environment variable is used across Windows/macOS/Linux runners, see an example of its use on [the `setup-python` GitHub Action](https://github.com/actions/setup-python)). This option was [suggested](https://github.com/actions/virtual-environments/issues/2875#issuecomment-1163392159) by [@miketimofeev](https://github.com/miketimofeev).
+`preinstalled-runtimes` removes the pre-cached tools (Node, Go, Python, Ruby, …) loaded into a runner's environment, [installed in the path given by the `AGENT_TOOLSDIRECTORY` environment variable](https://github.com/actions/virtual-environments/blob/5a2cb18a48bce5da183486b95f5494e4fd0c0640/images/linux/scripts/installers/configure-environment.sh#L25-L29) (the same variable is used across Windows/macOS/Linux runners — see [`setup-python`](https://github.com/actions/setup-python)). It frees about 6 GB. This option was [suggested](https://github.com/actions/virtual-environments/issues/2875#issuecomment-1163392159) by [@miketimofeev](https://github.com/miketimofeev).
+
+> **Renamed in v2.0.0.** This option used to be called `tool-cache`. The old name still works and will keep working for the whole v2 line, but it prints a deprecation warning — please rename it when convenient. The new name says what is removed rather than where it is cached.
+
+## FAQ
+
+### What are the possible side effects of these settings?
+
+All of these options delete things. Most of the time the only consequence is that something you were not using is gone. But a couple have consequences that are **not obvious from the name**, and those are the ones worth knowing before you turn them on.
+
+Most options, when they bite, produce an error that names the thing that is missing — so you find out quickly. **Two do not**, and those are marked *indirect* below: the failure shows up somewhere else entirely, with nothing pointing back here.
+
+| option | what it removes | if you needed it, how you find out |
+|---|---|---|
+| `android` | Android SDK/NDK | direct — your Android build cannot find the SDK |
+| `dotnet` | the .NET SDK directory | direct — `dotnet` is not on `PATH` |
+| `haskell` | GHC toolchain | direct — `ghc`/`stack` is not on `PATH` |
+| `large-packages` | azure-cli, Chrome, Firefox, PowerShell, mono, LLVM, PHP, MongoDB, MySQL, the Google Cloud SDK/CLI — **and also the `dotnet-*` and `aspnetcore-*` packages** (see below) | direct — the command is not found. **This is also the slow one** (several minutes; [#40](../../issues/40)) |
+| `docker-images` | pre-pulled Docker images | direct-ish — your job re-pulls images it expected to be cached, so it is slower rather than broken |
+| `preinstalled-runtimes` *(default `false`)* | the pre-installed Node/Go/Python/Ruby toolchains that `actions/setup-*` uses | **indirect** — `actions/setup-python` and friends still work, but download their runtime instead of finding it. Usually just slower; occasionally a pinned version is not available to download |
+| `swap-storage` *(default `false`)* | the runner's swap file | **indirect, and the one to read twice** — see below |
+
+### Why do `swap-storage` and `preinstalled-runtimes` default to `false`?
+
+Because neither fails in a way you can trace back here.
+
+Removing swap produces a job that **dies under memory pressure** — no error about swap, no mention of this action, just a runner that stopped. As [@zaikunzhang](https://github.com/zaikunzhang) pointed out in [#12](../../issues/12), it is not uncommon for a job that is short on disk to be short on memory too, and it **took him a couple of days** to work out that this action was the cause. That is too high a price for a default.
+
+`preinstalled-runtimes` is the same shape in a milder form, and has defaulted to `false` since it was added in 2022 for exactly that reason.
+
+If you want either of them, ask for it explicitly:
+
+```yaml
+    - uses: jlumbroso/free-disk-space@v2
+      with:
+        swap-storage: true
+```
+
+### Why do the others default to `true`?
+
+The assumption is that if you are reaching for this action at all you are already out of disk, and the expensive mistake is reclaiming too little. So the defaults delete as much as they safely can and you turn off what you turn out to need — which works precisely *because* those failures tell you what they are. The two that do not tell you default to `false` instead.
+
+That reasoning, and the point at which it stops applying, are written up in [`docs/adr/0001`](docs/adr/0001-why-this-action-exists-and-why-it-is-public.md) and [`docs/adr/0007`](docs/adr/0007-swap-storage-defaults-to-false-the-policy-acquires-a-boundary.md).
+
+### I set `dotnet: false` and dotnet was still removed. Why?
+
+Because `large-packages` also removes it, and `large-packages` defaults to `true`. Two different options delete dotnet by two different mechanisms:
+
+- `dotnet` removes the **SDK directory** (`/usr/share/dotnet`)
+- `large-packages` removes the **apt packages** (`dotnet-*` and `aspnetcore-*`)
+
+So `dotnet: false` on its own is not enough — you currently also need `large-packages: false`, which is a blunt instrument since it removes a dozen unrelated things.
+
+This is a known bug, not intended behaviour; thanks to [@ashleney](https://github.com/ashleney) for reporting it in [#33](../../issues/33), where the fix is tracked.
+
+### Can I run this only when the runner is actually low on disk?
+
+Yes — decide in the workflow rather than in the action, so the condition is visible where the rest of your job logic lives. Check the free space first and gate the step on it:
+
+```yaml
+    - name: Check free space
+      id: disk
+      run: |
+        FREE_KB=$(df --output=avail -k "$GITHUB_WORKSPACE" | tail -1 | tr -d ' ')
+        echo "free_kb=$FREE_KB" >> "$GITHUB_OUTPUT"
+
+    - name: Free Disk Space (Ubuntu)
+      # run only if less than 20 GiB is available
+      if: fromJSON(steps.disk.outputs.free_kb) < 20971520
+      uses: jlumbroso/free-disk-space@v2
+```
+
+The comparison is numeric, so compare in **KiB** rather than rounding to whole gigabytes first. `fromJSON` is what makes the output a number rather than a string — see GitHub's [expressions documentation](https://docs.github.com/en/actions/reference/workflows-and-actions/expressions).
+
+Requested by [@wiegell](https://github.com/wiegell) in [#22](../../issues/22).
 
 ## Acknowledgement
 
