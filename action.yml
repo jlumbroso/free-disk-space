@@ -109,20 +109,20 @@ runs:
           echo ""
         }
 
-        # macro to print output of dh with caption
+        # macro to print output of df with caption
         printDH() {
           caption=${1:-}
 
           printSeparationLine '=' 80
           echo "${caption}"
           echo ""
-          echo "$ dh -h /"
+          echo "$ df -h /"
           echo ""
           df -h /
-          echo "$ dh -a /"
+          echo "$ df -a /"
           echo ""
           df -a /
-          echo "$ dh -a"
+          echo "$ df -a"
           echo ""
           df -a
           printSeparationLine '=' 80
