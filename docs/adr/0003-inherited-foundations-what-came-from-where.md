@@ -135,11 +135,28 @@ inputs into an `env:` block and quotes them.
 corrects an inherited pattern, and the fix is mechanical. *This ADR takes no
 position on severity — see the seed's open items and the maintainer seat.*
 
-### 3. A third defect, of a different class: `dotnet: false` does not stop dotnet being removed — **found 2026-09-16**
+### 3. A third defect, of a different class: `dotnet: false` does not stop dotnet being removed
 
-**Record.** Issue #33 (@ashleney, 2024-11-02): *"Specifying `dotnet: false` still
-deletes dotnet."* The report is correct, and the mechanism is visible in
-`action.yml`:
+**Record, and the users got here long before this reconstruction did.**
+
+- **@gmij, [#6](../../issues/6), 2023-08-08** — the first report, and a complete
+  one: *"when dotnet set false, and Large is true, shell will be clean all dotnet
+  runtime. please fix."*
+- **@ashleney, [#33](../../issues/33), 2024-11-02** — reported again as its own
+  issue: *"Specifying `dotnet: false` still deletes dotnet."*
+- **@ax3l, [#33](../../issues/33), 2025-06-23** — identified the mechanism and
+  supplied the workaround, citing the exact lines: *"dotnet is also removed in the
+  `large-packages` list of things, so you will need to set that to `false`, too."*
+
+> **An earlier version of this section said this defect was "found 2026-09-16"
+> and that it took "four years to diagnose." Both were false, and the falsity was
+> the same kind this campaign exists to document: the record existed — in three
+> issue comments, in public, on this repository — and I had not read it before
+> claiming novelty.** Caught by Parallax 6 against the primary threads. What this
+> section actually contributes is the *provenance* — why the overlap exists at all
+> — not the discovery of it.
+
+The reports are correct, and the mechanism is visible in `action.yml`:
 
 | option | what it does to dotnet |
 |---|---|
@@ -169,8 +186,9 @@ and that makes it a third class worth separating from the two above:
 > switch claims to control. The `large-packages` block arrived as an opaque unit
 > — a cited line lifted whole (defect 1 above, same cause) — so it was never read
 > for overlap with the options being built around it. **The cost of the good
-> decision was a silent one, and it took a user two years to report it and four
-> to have it diagnosed.**
+> decision was a silent one — and then it was reported, twice, and diagnosed by a
+> third user, and still sat for three years.** The failure was never that nobody
+> noticed; it was that noticing had nowhere to land.
 
 This is the clearest instance in the repository of something the code cannot tell
 you: **the bug is not in either component, and not in either parent's design. It
@@ -178,14 +196,20 @@ is in the relationship between an inherited unit and a new abstraction placed ov
 it** — and that relationship is exactly what no diff records and no comment
 mentions.
 
-*Not fixed here — implementation is not this seat's lane. The fix is a judgment
-call between (a) removing the dotnet/aspnetcore lines from `large-packages`, which
-changes what `large-packages` reclaims, and (b) gating them on `inputs.dotnet`,
-which couples two options. Recorded so that whoever fixes it inherits the
-diagnosis rather than the symptom. The same audit should be run on every other
-option against the `large-packages` list — `llvm`, `php`, `mongodb`, `mysql` have
-no corresponding toggle, so they are not affected, but the check is cheap and
-nobody has done it.*
+**Fixed in `9881e8b`** (2026-09-17), by option (b) — the `large-packages` block
+now gates its `dotnet-*`/`aspnetcore-*` removals on `inputs.dotnet`, and logs a
+`::notice::` when the exemption fires. The governing rule, ruled by Mint 5: *a
+specific subject outranks a general category.*
+
+*Scope of that claim, stated precisely because an earlier draft overstated it:
+**the policy is now explicit, and this release applies it to .NET.** Future
+subject options must add and test the corresponding exemption themselves — there
+is no general mechanism, and saying "the class is fixed" would claim an
+implementation that does not exist. A policy is valuable without that claim. The
+same overlap audit is still worth running against the rest of the
+`large-packages` list — `llvm`, `php`, `mongodb`, `mysql` have no toggles today,
+so nothing collides, but the first one that gets a toggle inherits this exact
+trap unless someone checks.*
 
 ### 4. The general consequence
 

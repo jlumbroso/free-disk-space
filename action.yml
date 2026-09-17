@@ -189,9 +189,14 @@ runs:
 
           # PRECEDENCE: a specific subject-toggle outranks this general category.
           # Setting `dotnet: false` keeps .NET everywhere, including the apt
-          # packages this block would otherwise sweep up — which is what issue #33
-          # reported. The same law applies to any future subject key: name it,
-          # exempt it here, no new grammar needed.
+          # packages this block would otherwise sweep up.
+          #
+          # Reported by @gmij in #6 (2023), again by @ashleney in #33 (2024), and
+          # diagnosed with a workaround by @ax3l in #33 (2025).
+          #
+          # The policy is explicit; this applies it to .NET. A future subject
+          # option must add and test its own exemption here — there is no general
+          # mechanism that does it automatically.
           if [[ "$DOTNET" == 'true' ]]; then
             sudo apt-get remove -y '^aspnetcore-.*' || echo "::warning::The command [sudo apt-get remove -y '^aspnetcore-.*'] failed to complete successfully. Proceeding..."
             sudo apt-get remove -y '^dotnet-.*' --fix-missing || echo "::warning::The command [sudo apt-get remove -y '^dotnet-.*' --fix-missing] failed to complete successfully. Proceeding..."

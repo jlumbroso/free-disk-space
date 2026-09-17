@@ -102,7 +102,7 @@ That reasoning, and the point at which it stops applying, are written up in [`do
 
 With `large-packages: true` — the default — setting `dotnet: false` could not keep .NET. Now it can: **the specific option overrides the general one**, so `dotnet: false` exempts .NET from the `large-packages` sweep as well, and the run logs a notice saying so. You get the rest of the cleanup without losing the thing you needed.
 
-Thanks to [@ashleney](https://github.com/ashleney) for reporting it in [#33](../../issues/33).
+Reported by [@gmij](https://github.com/gmij) in [#6](../../issues/6) back in 2023, again by [@ashleney](https://github.com/ashleney) in [#33](../../issues/33), and diagnosed with a workaround by [@ax3l](https://github.com/ax3l) in [#33](../../issues/33). Thank you all — it took far too long to act on.
 
 ### Can I run this only when the runner is actually low on disk?
 
