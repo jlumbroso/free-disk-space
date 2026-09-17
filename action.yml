@@ -48,6 +48,14 @@ runs:
   using: "composite"
   steps:
     - shell: bash
+      env:
+        ANDROID: ${{ inputs.android }}
+        DOTNET: ${{ inputs.dotnet }}
+        HASKELL: ${{ inputs.haskell }}
+        LARGE_PACKAGES: ${{ inputs.large-packages }}
+        DOCKER_IMAGES: ${{ inputs.docker-images }}
+        TOOL_CACHE: ${{ inputs.tool-cache }}
+        SWAP_STORAGE: ${{ inputs.swap-storage }}
       run: |
 
         # ======
@@ -130,7 +138,7 @@ runs:
 
         # Option: Remove Android library
 
-        if [[ ${{ inputs.android }} == 'true' ]]; then
+        if [[ "$ANDROID" == 'true' ]]; then
           BEFORE=$(getAvailableSpace)
           
           sudo rm -rf /usr/local/lib/android || true
@@ -142,7 +150,7 @@ runs:
 
         # Option: Remove .NET runtime
 
-        if [[ ${{ inputs.dotnet }} == 'true' ]]; then
+        if [[ "$DOTNET" == 'true' ]]; then
           BEFORE=$(getAvailableSpace)
 
           # https://github.community/t/bigger-github-hosted-runners-disk-space/17267/11
@@ -155,7 +163,7 @@ runs:
 
         # Option: Remove Haskell runtime
 
-        if [[ ${{ inputs.haskell }} == 'true' ]]; then
+        if [[ "$HASKELL" == 'true' ]]; then
           BEFORE=$(getAvailableSpace)
 
           sudo rm -rf /opt/ghc || true
@@ -169,7 +177,7 @@ runs:
         # Option: Remove large packages
         # REF: https://github.com/apache/flink/blob/master/tools/azure-pipelines/free_disk_space.sh
 
-        if [[ ${{ inputs.large-packages }} == 'true' ]]; then
+        if [[ "$LARGE_PACKAGES" == 'true' ]]; then
           BEFORE=$(getAvailableSpace)
           
           sudo apt-get remove -y '^aspnetcore-.*' || echo "::warning::The command [sudo apt-get remove -y '^aspnetcore-.*'] failed to complete successfully. Proceeding..."
@@ -191,7 +199,7 @@ runs:
 
         # Option: Remove Docker images
 
-        if [[ ${{ inputs.docker-images }} == 'true' ]]; then
+        if [[ "$DOCKER_IMAGES" == 'true' ]]; then
           BEFORE=$(getAvailableSpace)
 
           sudo docker image prune --all --force || true
@@ -204,7 +212,7 @@ runs:
         # Option: Remove tool cache
         # REF: https://github.com/actions/virtual-environments/issues/2875#issuecomment-1163392159
 
-        if [[ ${{ inputs.tool-cache }} == 'true' ]]; then
+        if [[ "$TOOL_CACHE" == 'true' ]]; then
           BEFORE=$(getAvailableSpace)
 
           sudo rm -rf "$AGENT_TOOLSDIRECTORY" || true
@@ -216,7 +224,7 @@ runs:
 
         # Option: Remove Swap storage
 
-        if [[ ${{ inputs.swap-storage }} == 'true' ]]; then
+        if [[ "$SWAP_STORAGE" == 'true' ]]; then
           BEFORE=$(getAvailableSpace)
 
           sudo swapoff -a || true
