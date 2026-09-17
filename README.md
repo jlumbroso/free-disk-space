@@ -43,7 +43,7 @@ Most of the options are self-explanatory: each removes a category of thing, and 
 
 `preinstalled-runtimes` removes the pre-cached tools (Node, Go, Python, Ruby, …) loaded into a runner's environment, [installed in the path given by the `AGENT_TOOLSDIRECTORY` environment variable](https://github.com/actions/virtual-environments/blob/5a2cb18a48bce5da183486b95f5494e4fd0c0640/images/linux/scripts/installers/configure-environment.sh#L25-L29) (the same variable is used across Windows/macOS/Linux runners — see [`setup-python`](https://github.com/actions/setup-python)). It frees about 6 GB. This option was [suggested](https://github.com/actions/virtual-environments/issues/2875#issuecomment-1163392159) by [@miketimofeev](https://github.com/miketimofeev).
 
-> **Renamed in v2.0.0.** This option used to be called `tool-cache`. The old name still works and will keep working for the whole v2 line, but it prints a deprecation warning — please rename it when convenient. The new name says what is removed rather than where it is cached.
+> **Renamed.** This option used to be called `tool-cache`. The old name still works and will keep working, but it prints a deprecation warning — please rename it when convenient. The new name says what is removed rather than where it is cached.
 
 ## FAQ
 
@@ -74,7 +74,7 @@ Removing swap produces a job that **dies under memory pressure** — no error ab
 If you want either of them, ask for it explicitly:
 
 ```yaml
-    - uses: jlumbroso/free-disk-space@v2
+    - uses: jlumbroso/free-disk-space@main
       with:
         swap-storage: true
 ```
@@ -87,7 +87,7 @@ That reasoning, and the point at which it stops applying, are written up in [`do
 
 ### I set `dotnet: false` and dotnet was still removed. Why?
 
-**Fixed in v2.0.1.** It used to happen because two different options delete .NET by two different mechanisms:
+**Fixed.** It used to happen because two different options delete .NET by two different mechanisms:
 
 - `dotnet` removes the **SDK directory** (`/usr/share/dotnet`)
 - `large-packages` removes the **apt packages** (`dotnet-*` and `aspnetcore-*`)
@@ -110,7 +110,7 @@ Yes — decide in the workflow rather than in the action, so the condition is vi
     - name: Free Disk Space (Ubuntu)
       # run only if less than 20 GiB is available
       if: fromJSON(steps.disk.outputs.free_kb) < 20971520
-      uses: jlumbroso/free-disk-space@v2
+      uses: jlumbroso/free-disk-space@main
 ```
 
 The comparison is numeric, so compare in **KiB** rather than rounding to whole gigabytes first. `fromJSON` is what makes the output a number rather than a string — see GitHub's [expressions documentation](https://docs.github.com/en/actions/reference/workflows-and-actions/expressions).
