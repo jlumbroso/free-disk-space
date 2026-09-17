@@ -1,0 +1,34 @@
+name: "Free Disk Space"
+description: "Free Disk Space"
+icon: "archive"
+color: "green"
+
+inputs:
+  remove-swap:
+    description: 'Remove Swap strorage'
+    required: false
+    default: 'false'
+
+runs:
+  using: "composite"
+  steps:
+
+    - shell: bash
+      env:
+        LINE: =====================
+      run: |
+        echo "${LINE} Before ${LINE}"
+        df -h /
+
+        sudo rm -rf /usr/local/lib/android
+        sudo rm -rf /usr/share/dotnet
+        sudo rm -rf /opt/ghc
+
+        if [[ ${{ inputs.remove-swap }} == 'true' ]]; then
+          sudo swapoff -a
+          sudo rm -f /mnt/swapfile
+          free -h
+        fi
+
+        echo "${LINE} After ${LINE}"
+        df -h /
