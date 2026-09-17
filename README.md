@@ -147,15 +147,15 @@ The log output of a typical example (with all options set to `true`) looks like 
 ================================================================================
 BEFORE CLEAN-UP:
 
-$ dh -h /
+$ df -h /
 
 Filesystem      Size  Used Avail Use% Mounted on
 /dev/root        84G   53G   31G  64% /
-$ dh -a /
+$ df -a /
 
 Filesystem     1K-blocks     Used Available Use% Mounted on
 /dev/root       87218124 55405432  31796308  64% /
-$ dh -a
+$ df -a
 
 Filesystem     1K-blocks     Used Available Use% Mounted on
 /dev/root       87218124 55405432  31796308  64% /
@@ -1650,15 +1650,15 @@ Swap:            0B          0B          0B
 ================================================================================
 AFTER CLEAN-UP:
 
-$ dh -h /
+$ df -h /
 
 Filesystem      Size  Used Avail Use% Mounted on
 /dev/root        84G   26G   58G  31% /
-$ dh -a /
+$ df -a /
 
 Filesystem     1K-blocks     Used Available Use% Mounted on
 /dev/root       87218124 26471028  60730712  31% /
-$ dh -a
+$ df -a
 
 Filesystem     1K-blocks     Used Available Use% Mounted on
 /dev/root       87218124 26471028  60730712  31% /
